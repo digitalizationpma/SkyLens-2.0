@@ -614,7 +614,11 @@ details.edmas summary{cursor:pointer;font-weight:700;font-size:13px}
 /* tombol tema melayang (video pembuka & gerbang) */
 #themeGate{position:fixed;top:16px;right:16px;z-index:9500;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--card);box-shadow:var(--shadow2);display:none;align-items:center;justify-content:center;padding:0}
 #themeGate.on{display:flex}
-.intro-snd{position:absolute;left:16px;bottom:16px;z-index:2;display:none;align-items:center;gap:8px;border:0;border-radius:999px;padding:8px 14px;background:rgba(28,33,45,.62);color:#fff;font-size:12px;font-weight:700;cursor:pointer}
+.intro-snd{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:2;display:none;align-items:center;gap:9px;border:0;border-radius:999px;padding:11px 20px;background:rgba(28,33,45,.78);color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.28);animation:sndPulse 1.8s ease-in-out infinite}
+@keyframes sndPulse{0%,100%{box-shadow:0 8px 24px rgba(0,0,0,.28),0 0 0 0 rgba(254,122,27,.55)}50%{box-shadow:0 8px 24px rgba(0,0,0,.28),0 0 0 10px rgba(254,122,27,0)}}
+#gateDepotOverlay img.glogo{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s ease}
+#gateDepotOverlay img.glogo:hover{transform:scale(1.05)}
+#gateDepotOverlay img.glogo:focus-visible{outline:2px solid var(--or);outline-offset:4px;border-radius:8px}
 .intro-snd.on{display:inline-flex}
 .intro-snd svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 /* peta: 2 kolom 30:70, info petak = kartu melayang di atas peta */
@@ -998,10 +1002,21 @@ body.fit-peta .subnav{display:none!important}
 </head>
 <body>
 <!-- ===== VIDEO PEMBUKA (tanpa tombol lewati) ===== -->
-<div id="intro" class="intro" hidden role="dialog" aria-modal="true" aria-label="Video pembuka SkyLens">
+<div id="intro" class="intro" role="dialog" aria-modal="true" aria-label="Video pembuka SkyLens">
   <video id="introVid" playsinline preload="auto" disablepictureinpicture disableremoteplayback></video>
-  <button id="introSnd" class="intro-snd" type="button" aria-label="Aktifkan suara"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 5 6M21 9l-5 6"/></svg><span>Suara aktif setelah klik / tekan tombol apa saja</span></button>
+  <button id="introSnd" class="intro-snd" type="button" aria-label="Aktifkan suara"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 5 6M21 9l-5 6"/></svg><span>Ketuk / tekan tombol apa saja untuk menyalakan suara</span></button>
 </div>
+<script>
+/* video pembuka menutup layar SEJAK AWAL (supaya login tidak bisa keduluan) + mulai mengunduh videonya selagi halaman diurai */
+(function(){
+  var it = document.getElementById('intro'), v = document.getElementById('introVid');
+  if(/[?&]nointro\b/.test(location.search)){ it.hidden = true; return; }
+  var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  it.classList.toggle('gelap', dark);
+  try{ v.src = 'pages_video/opening-' + (dark ? 'gelap' : 'terang') + '.mp4'; v.preload = 'auto'; v.load(); }catch(e){}
+  setTimeout(function(){ if(!window.__introOK){ it.hidden = true; } }, 15000);   // pengaman: kalau skrip utama galat, jangan kunci layar
+})();
+</script>
 <button id="themeGate" type="button" aria-label="Ganti tema" title="Ganti tema"></button>
 
 <!-- ===== GERBANG PILIH AREA ===== -->
@@ -6190,6 +6205,7 @@ function introSelesai(){
   INTRO.aktif = false; clearTimeout(INTRO.wd); introLepasSuara();
   var el = $('#intro'), v = $('#introVid');
   el.classList.add('out'); $('#introSnd').classList.remove('on');
+  try{ var gt1 = $('#gateDepotOverlay'); if(gt1) gt1.inert = false; }catch(e){}
   setTimeout(function(){
     if(INTRO.aktif) return;
     el.hidden = true; el.classList.remove('out');
@@ -6211,7 +6227,8 @@ function introMain(){
   el.classList.remove('out'); el.classList.toggle('gelap', curTheme() === 'dark'); el.hidden = false;
   snd.classList.remove('on'); themeGateSync();
   v.muted = false; v.onended = introSelesai; v.onerror = introSelesai;
-  v.src = introSrc();
+  try{ var gt0 = $('#gateDepotOverlay'); if(gt0) gt0.inert = true; }catch(e){}
+  if(!v.getAttribute('src') || v.getAttribute('src') !== introSrc()) v.src = introSrc();   // sudah diunduh sejak awal halaman
   try{ v.currentTime = 0; }catch(e){}
   var p = v.play();
   if(p && p.catch) p.catch(function(err){
@@ -6233,7 +6250,14 @@ function introMain(){
   try{ new MutationObserver(themeGateSync).observe(it, {attributes:true, attributeFilter:['hidden', 'class']}); }catch(e){}
   try{ new MutationObserver(themeGateSync).observe(gt, {attributes:true, attributeFilter:['style']}); }catch(e){}
   renderTema(); themeGateSync();
-  if(/[?&]nointro\b/.test(location.search)) return;
+  window.__introOK = true;
+  // logo di layar login (BM / RBM / admin) = putar ulang video pembuka, sama seperti logo di dalam dashboard
+  document.querySelectorAll('#gateDepotOverlay img.glogo').forEach(function(im){
+    im.setAttribute('role', 'button'); im.setAttribute('tabindex', '0'); im.setAttribute('title', 'Putar ulang video pembuka');
+    im.addEventListener('click', function(){ introMain(); });
+    im.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); introMain(); } });
+  });
+  if(/[?&]nointro\b/.test(location.search)){ it.hidden = true; return; }
   introMain();
 })();
 </script>
