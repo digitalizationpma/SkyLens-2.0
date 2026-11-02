@@ -1005,23 +1005,19 @@ body.fit-peta .subnav{display:none!important}
 .minimap .hintcv{z-index:500}
 .minimap:focus-visible{outline:3px solid var(--or);outline-offset:2px}
 
-/* ===== v26 (2 Nov): animasi tab "Tetes Cair + Percikan" (spec H01) ===== */
-.top #tabs{position:relative;gap:4px;padding:6px;border-radius:26px;background:#151A2E;max-width:100%}
-.top #tabs > button[role="tab"]{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:40px;padding:0 18px;border:0;border-radius:20px;background:transparent;color:#B8BDD6;font-family:inherit;font-size:13.5px;font-weight:600;line-height:1;white-space:nowrap;cursor:pointer;transition:color .2s .1s}
-.top #tabs > button[role="tab"]::after{content:attr(data-t);display:block;height:0;overflow:hidden;visibility:hidden;font-weight:800;pointer-events:none}
-.top #tabs > button[role="tab"][aria-selected="true"]{background:transparent;color:#1C212D;font-weight:800}
-.top #tabs > button[role="tab"][aria-selected="false"]:hover{color:#fff}
-.top #tabs > button[role="tab"]:focus-visible{outline:3px solid #FFD3AE;outline-offset:-3px}
-.tabs-pill{position:absolute;left:0;top:6px;height:40px;width:0;border-radius:20px;background:#FE7A1B;transform:translateX(0);will-change:transform,width;pointer-events:none}
+/* ===== v26 (2 Nov): efek animasi tab "Tetes Cair + Percikan" — warna & ukuran bar tetap ikut tema lama (v26b) ===== */
+.top #tabs{position:relative}
+.top #tabs > button[role="tab"]{position:relative;z-index:1;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;font-family:inherit;transition:color .2s .1s}
+.top #tabs > button[role="tab"]::after{content:attr(data-t);display:block;height:0;overflow:hidden;visibility:hidden;font-weight:700;pointer-events:none}
+.top #tabs > button[role="tab"][aria-selected="true"]{background:transparent}
+.tabs-pill{position:absolute;left:0;top:4px;height:34px;width:0;border-radius:999px;background:var(--active);transform:translateX(0);will-change:transform,width;pointer-events:none}
 .tabs-pill.stretch{transition:transform .2s cubic-bezier(.4,0,.2,1),width .2s cubic-bezier(.4,0,.2,1)}
 .tabs-pill.settle{transition:transform .42s cubic-bezier(.34,1.55,.64,1),width .42s cubic-bezier(.34,1.55,.64,1)}
 .tabs-pill.instant{transition:none}
 .tabs-pill.off{opacity:0}
-.tabs-sparks{position:absolute;top:6px;left:0;width:0;height:0;z-index:3;pointer-events:none;overflow:visible}
+.tabs-sparks{position:absolute;top:4px;left:0;width:0;height:0;z-index:3;pointer-events:none;overflow:visible}
 .tabs-sparks i{position:absolute;left:0;top:0;width:5px;height:5px;border-radius:50%;transform:translate(-2.5px,-2.5px) scale(0);opacity:0}
-@media (min-width:861px) and (max-width:1600px){.top #tabs{padding:5px;border-radius:24px}.top #tabs > button[role="tab"]{height:36px;padding:0 11px;font-size:12.5px}.tabs-pill{top:5px;height:36px;border-radius:18px}.tabs-sparks{top:5px}}
-@media (min-width:861px) and (max-width:1380px){.top #tabs{gap:2px;padding:4px;border-radius:22px}.top #tabs > button[role="tab"]{height:34px;padding:0 7px;font-size:12px;border-radius:17px}.tabs-pill{top:4px;height:34px;border-radius:17px}.tabs-sparks{top:4px}}
-@media (max-width:860px){.top #tabs > button[role="tab"]{padding:0 14px}.tabs-sparks{display:none}}
+@media (max-width:860px){.tabs-sparks{display:none}}
 @media (prefers-reduced-motion:reduce){.tabs-pill.stretch,.tabs-pill.settle{transition:none}.tabs-sparks{display:none}}
 </style>
 </head>
@@ -4005,12 +4001,12 @@ function grupDari(id){ for(var i = 0; i < GRUP_MENU.length; i++){ if(GRUP_MENU[i
 function subTampil(g){ return g[2].filter(function(v){ return v !== 'admin' || SUPER_ADMIN; }); }
 var MENU_DATAR = [['peta', 'Peta'], ['ringkasan', 'Ringkasan'], ['kinerja', 'Kinerja Sales'], ['temuan', 'Temuan & Foto'], ['penugasan', 'Penugasan'], ['sales', 'Daftar Sales']];
 var TABS = {cur: -1, token: 0, busy: false, dots: null, ro: null};
-function tabsBox(i){ var b = $('#tabs').querySelectorAll('button[role="tab"]')[i]; return b ? {x: b.offsetLeft, w: b.offsetWidth} : {x: 0, w: 0}; }
-function tabsSetPill(x, w){ var p = $('#tabs .tabs-pill'); p.style.transform = 'translateX(' + x + 'px)'; p.style.width = w + 'px'; }
+function tabsBox(i){ var b = $('#tabs').querySelectorAll('button[role="tab"]')[i]; return b ? {x: b.offsetLeft, w: b.offsetWidth, y: b.offsetTop, h: b.offsetHeight} : {x: 0, w: 0, y: 4, h: 34}; }
+function tabsSetPill(x, w, y, h){ var p = $('#tabs .tabs-pill'); p.style.transform = 'translateX(' + x + 'px)'; p.style.width = w + 'px'; if(y != null){ p.style.top = y + 'px'; p.style.height = h + 'px'; var sp = $('#tabs .tabs-sparks'); if(sp) sp.style.top = y + 'px'; } }
 function tabsPlace(i){
   var p = $('#tabs .tabs-pill'); if(!p) return;
   if(i < 0){ p.className = 'tabs-pill instant off'; return; }
-  var b = tabsBox(i); p.className = 'tabs-pill instant'; tabsSetPill(b.x, b.w);
+  var b = tabsBox(i); p.className = 'tabs-pill instant'; tabsSetPill(b.x, b.w, b.y, b.h);
 }
 function tabsSpark(state, cx){
   var sp = $('#tabs .tabs-sparks'); if(!sp || !TABS.dots) return;
@@ -4029,7 +4025,7 @@ function tabsInit(nav){
   nav.insertBefore(sp, nav.firstChild); nav.insertBefore(pill, nav.firstChild);
   TABS.dots = [];
   for(var k = 0; k < 8; k++){
-    var el = document.createElement('i'); el.style.background = k % 2 ? '#FF9A4D' : '#FE7A1B'; sp.appendChild(el);
+    var el = document.createElement('i'); el.style.background = k % 2 ? 'var(--or)' : 'var(--active)'; sp.appendChild(el);
     var a = (200 + k * 20) * Math.PI / 180, r = k % 2 ? 44 : 34;
     TABS.dots.push({el: el, dx: Math.cos(a) * r - 2.5, dy: Math.sin(a) * r - 2.5});
   }
@@ -4045,10 +4041,10 @@ function tabsGeser(from, to){
   var a = tabsBox(from), b = tabsBox(to);
   TABS.busy = true;
   var left = Math.min(a.x, b.x), right = Math.max(a.x + a.w, b.x + b.w);
-  pill.className = 'tabs-pill stretch'; tabsSetPill(left, right - left);
+  pill.className = 'tabs-pill stretch'; tabsSetPill(left, right - left, b.y, b.h);
   tabsSpark('idle');
   var hidup = function(){ return my === TABS.token; };
-  setTimeout(function(){ if(hidup()){ var b2 = tabsBox(to); pill.className = 'tabs-pill settle'; tabsSetPill(b2.x, b2.w); } }, 170);
+  setTimeout(function(){ if(hidup()){ var b2 = tabsBox(to); pill.className = 'tabs-pill settle'; tabsSetPill(b2.x, b2.w, b2.y, b2.h); } }, 170);
   setTimeout(function(){ if(hidup()){ var b3 = tabsBox(to); tabsSpark('pre', b3.x + b3.w / 2); } }, 400);
   setTimeout(function(){ if(hidup()) tabsSpark('go'); }, 450);
   setTimeout(function(){ if(hidup()){ TABS.busy = false; tabsPlace(to); } }, 650);
