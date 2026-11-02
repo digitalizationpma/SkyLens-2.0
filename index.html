@@ -1004,6 +1004,25 @@ body.fit-peta .subnav{display:none!important}
 .minimap .leaflet-container,.minimap .leaflet-container *{cursor:pointer!important}
 .minimap .hintcv{z-index:500}
 .minimap:focus-visible{outline:3px solid var(--or);outline-offset:2px}
+
+/* ===== v26 (2 Nov): animasi tab "Tetes Cair + Percikan" (spec H01) ===== */
+.top #tabs{position:relative;gap:4px;padding:6px;border-radius:26px;background:#151A2E;max-width:100%}
+.top #tabs > button[role="tab"]{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:40px;padding:0 18px;border:0;border-radius:20px;background:transparent;color:#B8BDD6;font-family:inherit;font-size:13.5px;font-weight:600;line-height:1;white-space:nowrap;cursor:pointer;transition:color .2s .1s}
+.top #tabs > button[role="tab"]::after{content:attr(data-t);display:block;height:0;overflow:hidden;visibility:hidden;font-weight:800;pointer-events:none}
+.top #tabs > button[role="tab"][aria-selected="true"]{background:transparent;color:#1C212D;font-weight:800}
+.top #tabs > button[role="tab"][aria-selected="false"]:hover{color:#fff}
+.top #tabs > button[role="tab"]:focus-visible{outline:3px solid #FFD3AE;outline-offset:-3px}
+.tabs-pill{position:absolute;left:0;top:6px;height:40px;width:0;border-radius:20px;background:#FE7A1B;transform:translateX(0);will-change:transform,width;pointer-events:none}
+.tabs-pill.stretch{transition:transform .2s cubic-bezier(.4,0,.2,1),width .2s cubic-bezier(.4,0,.2,1)}
+.tabs-pill.settle{transition:transform .42s cubic-bezier(.34,1.55,.64,1),width .42s cubic-bezier(.34,1.55,.64,1)}
+.tabs-pill.instant{transition:none}
+.tabs-pill.off{opacity:0}
+.tabs-sparks{position:absolute;top:6px;left:0;width:0;height:0;z-index:3;pointer-events:none;overflow:visible}
+.tabs-sparks i{position:absolute;left:0;top:0;width:5px;height:5px;border-radius:50%;transform:translate(-2.5px,-2.5px) scale(0);opacity:0}
+@media (min-width:861px) and (max-width:1600px){.top #tabs{padding:5px;border-radius:24px}.top #tabs > button[role="tab"]{height:36px;padding:0 11px;font-size:12.5px}.tabs-pill{top:5px;height:36px;border-radius:18px}.tabs-sparks{top:5px}}
+@media (min-width:861px) and (max-width:1380px){.top #tabs{gap:2px;padding:4px;border-radius:22px}.top #tabs > button[role="tab"]{height:34px;padding:0 7px;font-size:12px;border-radius:17px}.tabs-pill{top:4px;height:34px;border-radius:17px}.tabs-sparks{top:4px}}
+@media (max-width:860px){.top #tabs > button[role="tab"]{padding:0 14px}.tabs-sparks{display:none}}
+@media (prefers-reduced-motion:reduce){.tabs-pill.stretch,.tabs-pill.settle{transition:none}.tabs-sparks{display:none}}
 </style>
 </head>
 <body>
@@ -3985,9 +4004,72 @@ var SUB_TERAKHIR = {};
 function grupDari(id){ for(var i = 0; i < GRUP_MENU.length; i++){ if(GRUP_MENU[i][2].indexOf(id) >= 0) return GRUP_MENU[i]; } return GRUP_MENU[0]; }
 function subTampil(g){ return g[2].filter(function(v){ return v !== 'admin' || SUPER_ADMIN; }); }
 var MENU_DATAR = [['peta', 'Peta'], ['ringkasan', 'Ringkasan'], ['kinerja', 'Kinerja Sales'], ['temuan', 'Temuan & Foto'], ['penugasan', 'Penugasan'], ['sales', 'Daftar Sales']];
+var TABS = {cur: -1, token: 0, busy: false, dots: null, ro: null};
+function tabsBox(i){ var b = $('#tabs').querySelectorAll('button[role="tab"]')[i]; return b ? {x: b.offsetLeft, w: b.offsetWidth} : {x: 0, w: 0}; }
+function tabsSetPill(x, w){ var p = $('#tabs .tabs-pill'); p.style.transform = 'translateX(' + x + 'px)'; p.style.width = w + 'px'; }
+function tabsPlace(i){
+  var p = $('#tabs .tabs-pill'); if(!p) return;
+  if(i < 0){ p.className = 'tabs-pill instant off'; return; }
+  var b = tabsBox(i); p.className = 'tabs-pill instant'; tabsSetPill(b.x, b.w);
+}
+function tabsSpark(state, cx){
+  var sp = $('#tabs .tabs-sparks'); if(!sp || !TABS.dots) return;
+  if(cx != null) sp.style.left = cx + 'px';
+  TABS.dots.forEach(function(d){
+    var st = d.el.style;
+    if(state === 'idle'){ st.transition = 'none'; st.opacity = 0; st.transform = 'translate(-2.5px,-2.5px) scale(0)'; }
+    if(state === 'pre'){ st.transition = 'none'; st.opacity = 1; st.transform = 'translate(-2.5px,-2.5px) scale(1)'; }
+    if(state === 'go'){ st.transition = 'transform .6s cubic-bezier(.2,.8,.3,1), opacity .6s ease-in'; st.opacity = 0; st.transform = 'translate(' + d.dx + 'px,' + d.dy + 'px) scale(.4)'; }
+  });
+}
+function tabsInit(nav){
+  if(nav.querySelector('.tabs-pill')) return;
+  var pill = document.createElement('span'); pill.className = 'tabs-pill instant off'; pill.setAttribute('aria-hidden', 'true');
+  var sp = document.createElement('span'); sp.className = 'tabs-sparks'; sp.setAttribute('aria-hidden', 'true');
+  nav.insertBefore(sp, nav.firstChild); nav.insertBefore(pill, nav.firstChild);
+  TABS.dots = [];
+  for(var k = 0; k < 8; k++){
+    var el = document.createElement('i'); el.style.background = k % 2 ? '#FF9A4D' : '#FE7A1B'; sp.appendChild(el);
+    var a = (200 + k * 20) * Math.PI / 180, r = k % 2 ? 44 : 34;
+    TABS.dots.push({el: el, dx: Math.cos(a) * r - 2.5, dy: Math.sin(a) * r - 2.5});
+  }
+  try{ TABS.ro = new ResizeObserver(function(){ if(!TABS.busy) tabsPlace(TABS.cur); }); TABS.ro.observe(nav); }catch(e){}
+}
+function tabsGeser(from, to){
+  var my = ++TABS.token, reduce = false;
+  try{ reduce = matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+  var nav = $('#tabs'), pill = nav.querySelector('.tabs-pill');
+  var btn = nav.querySelectorAll('button[role="tab"]')[to];
+  try{ if(btn && nav.scrollWidth > nav.clientWidth + 2) btn.scrollIntoView({inline: 'nearest', block: 'nearest'}); }catch(e){}
+  if(reduce || from < 0 || to < 0){ TABS.busy = false; tabsPlace(to); return; }
+  var a = tabsBox(from), b = tabsBox(to);
+  TABS.busy = true;
+  var left = Math.min(a.x, b.x), right = Math.max(a.x + a.w, b.x + b.w);
+  pill.className = 'tabs-pill stretch'; tabsSetPill(left, right - left);
+  tabsSpark('idle');
+  var hidup = function(){ return my === TABS.token; };
+  setTimeout(function(){ if(hidup()){ var b2 = tabsBox(to); pill.className = 'tabs-pill settle'; tabsSetPill(b2.x, b2.w); } }, 170);
+  setTimeout(function(){ if(hidup()){ var b3 = tabsBox(to); tabsSpark('pre', b3.x + b3.w / 2); } }, 400);
+  setTimeout(function(){ if(hidup()) tabsSpark('go'); }, 450);
+  setTimeout(function(){ if(hidup()){ TABS.busy = false; tabsPlace(to); } }, 650);
+  setTimeout(function(){ if(hidup()) tabsSpark('idle'); }, 1150);
+}
 function renderTabs(){
-  /* v21: semua menu tampil di header (tanpa sub-menu). Halaman Super Admin dibuka lewat tombol Super Admin. */
-  $('#tabs').innerHTML = MENU_DATAR.map(function(x){ return '<button role="tab" aria-selected="' + (VIEW === x[0]) + '" data-go="' + x[0] + '" type="button">' + x[1] + '</button>'; }).join('');
+  /* v21: semua menu tampil di header (tanpa sub-menu). v26: tombol dibuat sekali, pil oranye bergeser dengan animasi tetes cair + percikan. */
+  var nav = $('#tabs'); tabsInit(nav);
+  var btns = nav.querySelectorAll('button[role="tab"]');
+  if(btns.length !== MENU_DATAR.length){
+    [].slice.call(btns).forEach(function(b){ b.remove(); });
+    MENU_DATAR.forEach(function(x){
+      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('data-go', x[0]); b.setAttribute('data-t', x[1]); b.textContent = x[1]; nav.appendChild(b);
+    });
+    btns = nav.querySelectorAll('button[role="tab"]'); TABS.cur = -2;   /* -2 = belum pernah ditempatkan */
+  }
+  var idx = -1;
+  [].slice.call(btns).forEach(function(b, k){ var on = MENU_DATAR[k][0] === VIEW; b.setAttribute('aria-selected', String(on)); if(on) idx = k; });
+  var dari = TABS.cur;
+  if(dari === -2){ TABS.cur = idx; TABS.token++; TABS.busy = false; tabsPlace(idx); }
+  else if(idx !== dari){ TABS.cur = idx; tabsGeser(dari, idx); }
   var sn0 = document.getElementById('subnav'); if(sn0){ sn0.hidden = true; sn0.innerHTML = ''; }
 }
 function renderTabsLama(){
