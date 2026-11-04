@@ -1019,6 +1019,28 @@ body.fit-peta .subnav{display:none!important}
 .tabs-sparks i{position:absolute;left:0;top:0;width:5px;height:5px;border-radius:50%;transform:translate(-2.5px,-2.5px) scale(0);opacity:0}
 @media (max-width:860px){.tabs-sparks{display:none}}
 @media (prefers-reduced-motion:reduce){.tabs-pill.stretch,.tabs-pill.settle{transition:none}.tabs-sparks{display:none}}
+.tut-btn{gap:7px;white-space:nowrap;font-weight:800;flex:0 0 auto}
+.tour{z-index:200000}.tour-spot{z-index:200001}.tour-tip{z-index:200002}
+.tour-prog{height:3px;border-radius:3px;background:rgba(255,255,255,.14);margin:-4px 0 10px;overflow:hidden}
+.tour-prog i{display:block;height:100%;width:0;background:var(--or);transition:width .3s}
+.tour-bab{font-size:10.5px;font-weight:700;color:#AEB9D3;margin-bottom:2px;text-transform:uppercase;letter-spacing:.06em}
+.tour-aksi{display:flex;flex-wrap:wrap;gap:6px;margin:-6px 0 14px}
+.tour-aksi span{font-size:11px;font-weight:700;color:#1C212D;background:#FFD3AE;border-radius:999px;padding:3px 9px}
+.tour-aksi:empty{display:none}
+.tour-links{display:flex;gap:12px}
+.tour-tip{width:340px}
+.tut-hub h3{margin:0 0 4px}
+.tut-hub .tut-sub{font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.5}
+.tut-hub .tut-list{display:flex;flex-direction:column;gap:8px;max-height:min(60vh,520px);overflow:auto;padding-right:4px}
+.tut-hub .tut-it{display:flex;align-items:center;gap:12px;text-align:left;width:100%;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:10px 12px;cursor:pointer;color:var(--ink);font:inherit}
+.tut-hub .tut-it:hover{border-color:var(--or)}
+.tut-hub .tut-no{flex:0 0 30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13px;background:var(--active);color:var(--on-active)}
+.tut-hub .tut-it.done .tut-no{background:#1E9E5A;color:#fff}
+.tut-hub .tut-tx{flex:1;min-width:0}.tut-hub .tut-tx b{display:block;font-size:14px}.tut-hub .tut-tx span{display:block;font-size:12px;color:var(--muted);line-height:1.4}
+.tut-hub .tut-n{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.tut-hub .mact{justify-content:space-between;flex-wrap:wrap}
+.sisir-klik{cursor:pointer;border-radius:12px;padding:6px 8px;margin:-6px -8px;transition:background .15s}
+.sisir-klik:hover,.sisir-klik:focus-visible{background:var(--bg);outline:none}
 </style>
 </head>
 <body>
@@ -1083,7 +1105,7 @@ body.fit-peta .subnav{display:none!important}
       <button class="icon-btn hide-sm" id="bellBtn" type="button" aria-label="Notifikasi temuan baru" title="Temuan baru"><span data-ico="bell"></span><span id="bellDot" hidden style="position:absolute;top:7px;right:8px;width:9px;height:9px;border-radius:50%;background:var(--or);border:2px solid var(--card)"></span></button>
       <div id="bellPop" class="bellpop" hidden></div>
     </div>
-    <button class="btn btn-or sa-btn" id="btnHdrSA" type="button" aria-pressed="false" aria-label="Super Admin" title="Super Admin"><svg class="sa-arcs" id="saArcs" viewBox="0 0 120 40" preserveAspectRatio="none" aria-hidden="true"><path d=""/><path d=""/><path d=""/><path d=""/></svg><span>Super Admin</span></button>
+    <button class="btn btn-or tut-btn" id="btnHdrTut" type="button" aria-label="Tutorial dashboard" title="Tutorial: panduan lengkap semua fitur dashboard"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="9.5"/><path d="M9.3 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.7 2.5-2.7 4"/><path d="M12 17.6h.01"/></svg><span>Tutorial</span></button>
     <span class="chip-mode hide-sm" id="modeChip">Depo</span><span class="chip-mode hide-sm" id="scopeChip" hidden style="background:var(--tint);color:var(--or-ink)"></span>
   </header>
   <nav class="subnav" id="subnav" aria-label="Bagian menu" hidden></nav>
@@ -1453,16 +1475,20 @@ body.fit-peta .subnav{display:none!important}
 <!-- ===== TUR ===== -->
 <div class="tour" id="tour">
   <div class="tour-spot" id="tourSpot"></div>
-  <div class="tour-tip" id="tourTip">
+  <div class="tour-tip" id="tourTip" role="dialog" aria-live="polite">
+    <div class="tour-prog"><i id="tourProg"></i></div>
+    <div class="tour-bab" id="tourBab"></div>
     <div class="tour-step" id="tourStep"></div>
     <div class="tour-title" id="tourTitle"></div>
     <div class="tour-desc" id="tourDesc"></div>
+    <div class="tour-aksi" id="tourAksi"></div>
     <div class="tour-actions">
-      <button class="tour-skip" id="tourSkipBtn" type="button">Lewati tutorial</button>
+      <div class="tour-links"><button class="tour-skip" id="tourSkipBtn" type="button">Tutup</button><button class="tour-skip" id="tourHubBtn" type="button">Daftar bab</button></div>
       <div class="tour-nav"><button class="tour-prev" id="tourPrev" type="button">‹ Kembali</button><button class="tour-next" id="tourNext" type="button">Lanjut ›</button></div>
     </div>
   </div>
 </div>
+<div class="modalInfo" id="modalTut" onclick="if(event.target===this) this.classList.remove('show')"><div class="box wide tut-hub" id="tutHubBox"></div></div>
 <div id="legacyStubs" hidden>
   <select id="depotSel"></select><span id="depotAktifLabel"></span><div id="superAdminBanner"></div><div id="salesCard"></div>
   <div id="statsRow"></div><table><tbody id="progressBody"></tbody><tbody id="temuanBody"></tbody></table><div id="temuanEmpty"></div>
@@ -2834,6 +2860,13 @@ function pasangKendaliStatik(){
   });
   map.on('click', function(e){
     if(MANUAL_DRAW.active) return;
+    /* v28b: klik yang tertahan kanvas lapisan lain (mis. setelah petak dipilih / Jalan Pacmann ON) tetap memilih petak di bawahnya */
+    try{
+      if(!DRAW_MODE && D && gZona && map.hasLayer(gZona)){
+        var kk = hitungKeyPetak(Math.floor(e.latlng.lng / D.S), Math.floor(e.latlng.lat / D.S)), lz = zonaLayerByKey[kk];
+        if(lz && gZona.hasLayer(lz)){ pilihPetak(kk, {geser:false}); return; }
+      }
+    }catch(e2){}
     var la=e.latlng.lat.toFixed(6), lo=e.latlng.lng.toFixed(6);
     L.popup({closeButton:true}).setLatLng(e.latlng).setContent(
       '<div class="ptitle">'+la+', '+lo+'</div>'+
@@ -4000,6 +4033,8 @@ var SUB_TERAKHIR = {};
 function grupDari(id){ for(var i = 0; i < GRUP_MENU.length; i++){ if(GRUP_MENU[i][2].indexOf(id) >= 0) return GRUP_MENU[i]; } return GRUP_MENU[0]; }
 function subTampil(g){ return g[2].filter(function(v){ return v !== 'admin' || SUPER_ADMIN; }); }
 var MENU_DATAR = [['peta', 'Peta'], ['ringkasan', 'Ringkasan'], ['kinerja', 'Kinerja Sales'], ['temuan', 'Temuan & Foto'], ['penugasan', 'Penugasan'], ['sales', 'Daftar Sales']];
+/* v28: tombol Super Admin di header diganti Tutorial; saat mode Super Admin, tab Super Admin muncul di menu utama */
+function menuDatar(){ return SUPER_ADMIN ? MENU_DATAR.concat([['admin', 'Super Admin']]) : MENU_DATAR; }
 var TABS = {cur: -1, token: 0, busy: false, dots: null, ro: null};
 function tabsBox(i){ var b = $('#tabs').querySelectorAll('button[role="tab"]')[i]; return b ? {x: b.offsetLeft, w: b.offsetWidth, y: b.offsetTop, h: b.offsetHeight} : {x: 0, w: 0, y: 4, h: 34}; }
 function tabsSetPill(x, w, y, h){ var p = $('#tabs .tabs-pill'); p.style.transform = 'translateX(' + x + 'px)'; p.style.width = w + 'px'; if(y != null){ p.style.top = y + 'px'; p.style.height = h + 'px'; var sp = $('#tabs .tabs-sparks'); if(sp) sp.style.top = y + 'px'; } }
@@ -4053,16 +4088,17 @@ function tabsGeser(from, to){
 function renderTabs(){
   /* v21: semua menu tampil di header (tanpa sub-menu). v26: tombol dibuat sekali, pil oranye bergeser dengan animasi tetes cair + percikan. */
   var nav = $('#tabs'); tabsInit(nav);
-  var btns = nav.querySelectorAll('button[role="tab"]');
-  if(btns.length !== MENU_DATAR.length){
+  var btns = nav.querySelectorAll('button[role="tab"]'), MD = menuDatar(), sig = MD.map(function(x){ return x[0]; }).join(',');
+  if(nav.getAttribute('data-sig') !== sig){
+    nav.setAttribute('data-sig', sig);
     [].slice.call(btns).forEach(function(b){ b.remove(); });
-    MENU_DATAR.forEach(function(x){
+    MD.forEach(function(x){
       var b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('data-go', x[0]); b.setAttribute('data-t', x[1]); b.textContent = x[1]; nav.appendChild(b);
     });
     btns = nav.querySelectorAll('button[role="tab"]'); TABS.cur = -2;   /* -2 = belum pernah ditempatkan */
   }
   var idx = -1;
-  [].slice.call(btns).forEach(function(b, k){ var on = MENU_DATAR[k][0] === VIEW; b.setAttribute('aria-selected', String(on)); if(on) idx = k; });
+  [].slice.call(btns).forEach(function(b, k){ var on = MD[k][0] === VIEW; b.setAttribute('aria-selected', String(on)); if(on) idx = k; });
   var dari = TABS.cur;
   if(dari === -2){ TABS.cur = idx; TABS.token++; TABS.busy = false; tabsPlace(idx); }
   else if(idx !== dari){ TABS.cur = idx; tabsGeser(dari, idx); }
@@ -5217,10 +5253,10 @@ function renderKinerja(){
   (function(){
     var rs = (M.sales || []).filter(function(x){ return x.petak > 0; }).sort(function(a, b){
       return (b.kM ? b.kD / b.kM : 0) - (a.kM ? a.kD / a.kM : 0) || b.kD - a.kD; });
-    $('#knSisir').innerHTML = '<div class="row sp"><h2>Progress sisir per sales</h2><span class="muted" style="font-size:12px">petak A+B milik sales</span></div>' +
+    $('#knSisir').innerHTML = '<div class="row sp"><h2>Progress sisir per sales</h2><span class="muted" style="font-size:12px">petak A+B milik sales · klik untuk lihat di peta</span></div>' +
       (rs.length ? rs.map(function(x){
         var pk = x.kM ? Math.round(x.kD / x.kM * 100) : 0, pj = x.jL > 1 ? Math.round(x.jC / x.jL * 100) : null;
-        return '<div class="col" style="gap:5px"><div class="row sp" style="font-size:14px"><b>' + esc(namaPendek(namaSalesDari(x.kode))) + '</b><span class="mono muted" style="font-size:12px">' + x.petak + ' petak</span></div>' +
+        return '<div class="col sisir-klik" data-sales="' + esc(x.kode) + '" data-pacman="1" role="button" tabindex="0" title="Klik: buka di Peta (Jalan Pacmann menyala) dan putar rute sales ini" style="gap:5px"><div class="row sp" style="font-size:14px"><b>' + esc(namaPendek(namaSalesDari(x.kode))) + '</b><span class="mono muted" style="font-size:12px">' + x.petak + ' petak</span></div>' +
           '<div class="row" style="gap:8px;font-size:12px"><span style="width:78px" class="muted">Kotak</span><span class="bar" style="flex:1"><i style="width:' + pk + '%;background:var(--or)"></i></span><b class="mono" style="width:92px;text-align:right">' + x.kD + '/' + x.kM + ' · ' + pk + '%</b></div>' +
           '<div class="row" style="gap:8px;font-size:12px"><span style="width:78px" class="muted">Jalan besar</span><span class="bar" style="flex:1"><i style="width:' + (pj || 0) + '%;background:#14B8A6"></i></span><b class="mono" style="width:92px;text-align:right">' + (pj == null ? (JL ? 'tidak ada' : '—') : jlKm(x.jC) + ' · ' + pj + '%') + '</b></div></div>';
       }).join('') : empty('Belum ada petak ditugaskan', 'Progress muncul setelah petak ditugaskan ke sales dan sales mulai berjalan.', 'tidur'));
@@ -5501,6 +5537,10 @@ function ruteMasuk(){
   if(!RUTE.kode && !D) return;
 }
 /* v15: Rute & kehadiran pindah ke kartu petak di Peta. Klik nama sales → buka petak paling baru dikerjakan + putar rute. */
+document.addEventListener('keydown', function(e){ if(e.key === 'Enter' && e.target && e.target.classList && e.target.classList.contains('sisir-klik')) e.target.click(); });
+function nyalakanPacman(){
+  ['ljalan', 'ljejak'].forEach(function(id){ var c = document.getElementById(id); if(c && !c.checked){ c.checked = true; c.dispatchEvent(new Event('change')); } });
+}
 function bukaRuteSales(kode){
   kode = String(kode);
   var keys = (assignedKeysBySales[kode] || []).map(Number);
@@ -5839,64 +5879,241 @@ async function rosterHapus(i){
   simpanSalesList = async function(){ await asli(); rosterRender(); uiRefreshSoon(); };
 })();
 
-/* ================= TUR (tutorial) ================= */
-var TOUR_STEPS = [
-  {view:'ringkasan', sel:'#tabs', title:'1. Menu utama', desc:'Peta untuk kerja utama (petak, toko, jejak sales). Ringkasan = laporan hari ini. Kinerja Sales, Temuan & Foto, Penugasan, dan Daftar Sales langsung bisa diklik dari sini. Pil Pantauan lapangan di sebelahnya: klik untuk lihat sales aktif, temuan hari ini, dan NOO sah.'},
-  {view:'ringkasan', sel:'#kpiNoo', title:'2. Angka yang paling penting', desc:'NOO sah = temuan “Lanjut NOO” yang punya foto dan titik GPS. Dihitung dari data asli di server, bukan perkiraan. Di bawahnya ada tahapan kerja lapangan, dari petak ditugaskan sampai NOO sah.'},
-  {view:'peta', sel:'#petaSide', title:'3. Saring dan atur peta', desc:'Tab Saring untuk memilih prioritas A / B / C, bangunan minimal, dan zona pilot. Tab Lapisan untuk ganti peta dasar dan menyalakan jejak, grid sisir, atau temuan. Tab Cari toko berisi daftar toko existing, toko NOO berhasil, dan toko yang ketemu tapi belum berhasil.'},
-  {view:'peta', sel:'#mapCard', title:'4. Klik petak, lihat sales otomatisnya', desc:'Klik petak mana pun. Kartu detailnya menunjukkan sales yang otomatis ditugaskan dari JKS (sales dengan toko AS-IS terbanyak di petak itu), dan tetap bisa diganti manual. Garis tebal hitam = zona pilot.'},
-  {view:'penugasan', sel:'#kanban', title:'5. Papan penugasan', desc:'Kolom bergeser otomatis mengikuti progress sisir: Ditugaskan, Sedang disisir, Selesai. Semua petak A + B sudah ditugaskan otomatis dari JKS; tombol Assign hanya untuk pengecualian.'},
-  {view:'penugasan', sel:'#bebanSales', title:'6. Seimbangkan beban sales', desc:'Setiap batang = satu petak aktif. Sales dengan batang paling sedikit adalah kandidat berikutnya. Saran penugasan di bawahnya memakai aturan yang sama.'},
-  {view:'kinerja', sel:'#knKpi', title:'7. Kinerja per periode', desc:'Temuan, NOO sah, konversi, kotak tersisir, dan sales aktif, dibandingkan dengan periode sebelumnya. Ganti 30 hari / 7 hari di kanan atas, dan Export Excel untuk laporan.'},
-  {view:'temuan', sel:'#tgrid', title:'8. Temuan dengan foto asli', desc:'Klik kartu untuk lihat detail dan lokasinya. Centang 2 sampai 10 temuan, lalu tekan “Buat gambar laporan” untuk Report WA. Temuan di luar petak ditandai LUAR PETAK dan tetap dihitung.'},
-  {view:'peta', sel:'#mapCard', title:'9. Rute, kehadiran & progress di kartu petak', desc:'Di kartu petak ada progress tiap sales (kotak, status macet/selesai) dan bagian Rute & kehadiran: pilih sales, lalu putar ulang jejaknya di peta (0,5x · 1x · 2x). Lingkaran bernomor = berhenti 5 menit atau lebih.'},
-  {view:'peta', sel:'#petaSide', title:'10. Petak 4x4 & Jalan Pacmann', desc:'Petak 4x4: kotak biru = selesai disisir, gelap = tanpa permukiman. Kalau 16 kotak beres, petaknya ikut jadi biru. Jalan Pacmann ON = jalan yang sudah dilewati sales berwarna teal.'},
-  {view:'sales', sel:'#rosterTbl', title:'11. Kelola daftar sales', desc:'Tambah atau hapus sales di sini, perubahan langsung tersimpan ke server. Sales cukup login dengan kodenya, tanpa PIN. ASS, BM, RBM, dan HO ditambahkan seperti sales biasa.'},
-  {view:'ringkasan', sel:'#themeTop', title:'12. Tema dan video pembuka', desc:'Tombol ini mengganti tema terang / gelap. Klik logo SkyLens untuk memutar ulang video pembuka sesuai tema yang sedang aktif.'}
+/* ================= TUTORIAL v28: Pusat Tutorial + tur lengkap per bab ================= */
+/* Tur hanya menunjukkan dan membuka panel (kartu petak, menu, pencarian) untuk diperlihatkan; tidak mengubah data atau saringan. */
+var TUT_BAB = [
+  {id:'nav',       n:'Navigasi atas',                    d:'Logo, pilih area, menu utama, pantauan lapangan, cari, tema, notifikasi.'},
+  {id:'peta',      n:'Peta: warna & gerak',              d:'Arti warna petak dan titik toko, geser, zoom, legenda.'},
+  {id:'panel',     n:'Peta: Saring, Lapisan, Cari toko', d:'Menyaring petak, ganti peta dasar, nyalakan lapisan, cari toko.'},
+  {id:'kartu',     n:'Kartu petak',                      d:'Prediksi toko, misi Pinpin, rute & kehadiran, penugasan.'},
+  {id:'gambar',    n:'Gambar area manual',               d:'Menandai potensi yang tidak tercakup petak otomatis.'},
+  {id:'ringkasan', n:'Ringkasan',                        d:'Laporan hari ini dalam satu halaman.'},
+  {id:'kinerja',   n:'Kinerja Sales',                    d:'Angka per periode, grafik, peringkat, Export Excel.'},
+  {id:'temuan',    n:'Temuan & Foto',                    d:'Saring, cari, detail, Report WA, Export Excel.'},
+  {id:'penugasan', n:'Penugasan',                        d:'Penugasan otomatis, assign manual, beban sales.'},
+  {id:'sales',     n:'Daftar Sales',                     d:'Tambah, hapus, dan isi banyak sales sekaligus.'},
+  {id:'akun',      n:'Akun',                             d:'Ganti password, logout / ganti user, membuka lagi tutorial.'},
+  {id:'sa',        n:'Super Admin',                      d:'Ringkasan semua depo dan alat khusus.', sa:true}
 ];
-var tourIdx = 0, TOUR_RETRY_MS = 120, TOUR_RETRY_MAX = 12;
-function tourAda(el){ return !!el && el.getClientRects().length > 0; }
+function tutEl(s){ if(typeof s === 'function'){ try{ return s(); }catch(e){ return null; } } return s ? document.querySelector(s) : null; }
+function tutNaik(el, sel){ return el ? (el.closest(sel) || el) : null; }
+/* blok terkecil di dalam akar yang teksnya cocok (untuk bagian kartu petak yang tidak punya id) */
+function tutBlok(akar, re){
+  var r = document.querySelector(akar); if(!r) return null;
+  var best = null, ba = Infinity;
+  [].slice.call(r.querySelectorAll('div,section,details')).forEach(function(e){
+    if(!re.test(e.textContent)) return;
+    var b = e.getBoundingClientRect(), a = b.width * b.height;
+    if(b.height >= 28 && a > 2500 && a < ba){ ba = a; best = e; }
+  });
+  return best;
+}
+function tutBukaKartu(){
+  if(VIEW !== 'peta') goView('peta', {noAnim:true, keepScroll:true});
+  if(document.getElementById('petakTutup')) return;
+  try{
+    var zs = (D && D.zona) || [], z = zs.filter(function(z){ return z[23] === 1; })[0] || zs.filter(function(z){ return z[23] === 2; })[0] || zs[0];
+    if(z) pilihPetak(z[2] * 100000 + z[3]);
+  }catch(e){}
+}
+function tutTutupKartu(){ var b = document.getElementById('petakTutup'); if(b) b.click(); }
+function tutMenuDepo(buka){
+  var b = document.querySelector('.top .slsel-btn'), pop = document.querySelector('.slsel-pop');
+  if(!b) return;
+  if((buka && !pop) || (!buka && pop)) b.click();
+}
+function tutPulse(buka){ try{ if(PULSE_BUKA !== buka){ PULSE_BUKA = buka; pulseSync(); } }catch(e){} }
+function tutTab(t){ try{ setPetaTab(t); }catch(e){} }
+
+var TOUR_STEPS = [
+  /* ---------- 1. Navigasi atas ---------- */
+  {b:'nav', s:'#logoBtn', t:'Logo SkyLens', d:'Klik logo untuk memutar ulang video pembuka. Videonya menyesuaikan tema terang atau gelap yang sedang aktif.', a:['Klik']},
+  {b:'nav', s:function(){ return document.querySelector('.top .slsel-btn'); }, t:'Pilih area / depo', d:'Nama depo yang sedang dibuka. Klik untuk pindah: BM melihat depo-depo di cabangnya, RBM melihat semua depo di region.', a:['Klik']},
+  {b:'nav', pre:function(){ tutMenuDepo(true); }, post:function(){ tutMenuDepo(false); }, s:'.slsel-pop', t:'Isi menu area', d:'Pilihan paling atas "VIEW …" menggabungkan semua depo kamu dalam satu peta. Di bawahnya daftar depo satu per satu. Bagian paling bawah: Ganti password (kalau masuk pakai akun pribadi) dan Logout / ganti user.', a:['Klik pilihan', 'Esc untuk menutup']},
+  {b:'nav', s:'#tabs', t:'Menu utama', d:'Enam halaman: Peta, Ringkasan, Kinerja Sales, Temuan & Foto, Penugasan, Daftar Sales. Pil berwarna menandai halaman yang sedang dibuka. Di layar kecil menu bisa digeser ke samping.', a:['Klik', 'Geser di HP']},
+  {b:'nav', s:'#hpToggle', t:'Pantauan lapangan', d:'Ringkasan kegiatan lapangan hari ini. Titik di depannya menyala kalau ada sales yang aktif. Klik untuk membuka angkanya.', a:['Klik']},
+  {b:'nav', pre:function(){ tutPulse(true); }, post:function(){ tutPulse(false); }, s:'#hpPop', t:'Isi pantauan lapangan', d:'Sales aktif hari ini (yang sudah mencatat aktivitas), temuan hari ini, dan NOO sah bulan ini. "Segarkan sekarang" mengambil angka terbaru dari server.', a:['Klik Segarkan sekarang']},
+  {b:'nav', s:'#btnCari', t:'Cari cepat', d:'Cari desa, kecamatan, nama atau kode toko, dan nama atau kode sales dari halaman mana pun. Pintasan keyboard: Ctrl + K.', a:['Klik', 'Ctrl + K']},
+  {b:'nav', pre:function(){ try{ bukaCari(); }catch(e){} }, post:function(){ try{ tutupCari(); }catch(e){} }, s:'.cari-box', t:'Kotak pencarian', d:'Ketik minimal 2 huruf. Klik salah satu hasil, atau tekan Enter untuk hasil teratas: peta langsung menuju petak, toko, atau sales itu. Esc atau klik di luar kotak untuk menutup.', a:['Ketik', 'Enter', 'Esc']},
+  {b:'nav', s:'#themeTop', t:'Tema terang / gelap', d:'Ganti tampilan terang atau gelap. Pilihanmu diingat di browser ini.', a:['Klik']},
+  {b:'nav', s:'#bellBtn', t:'Notifikasi temuan baru', d:'Titik oranye = ada temuan baru yang belum kamu lihat. Klik untuk melihat daftarnya. Membuka halaman Temuan & Foto menandai semuanya sudah dilihat.', a:['Klik']},
+  {b:'nav', s:'#btnHdrTut', t:'Tombol Tutorial', d:'Buka tutorial ini kapan saja. Kamu bisa memilih satu bab atau mengulang dari awal.', a:['Klik']},
+
+  /* ---------- 2. Peta: warna & gerak ---------- */
+  {b:'peta', v:'peta', s:'#mapCard', t:'Peta kerja', d:'Setiap kotak = satu petak (±1,1 × 1,1 km). Warna = prioritas: merah A, oranye B, kuning C, abu-abu sepi. Garis hitam tebal = zona pilot (Prioritas A dengan celah RT-L 1,5 ke atas).'},
+  {b:'peta', v:'peta', s:'#map', t:'Geser dan zoom', d:'Seret peta untuk bergeser. Scroll mouse, atau cubit dua jari di HP, untuk zoom. Tombol + dan − di pojok kanan atas peta juga bisa. Semakin dekat, titik toko makin jelas.', a:['Seret', 'Scroll', 'Cubit di HP']},
+  {b:'peta', v:'peta', s:'#legend', t:'Legenda warna', d:'Arti warna petak dan titik toko: merah = toko A, oranye = B, biru = C, hijau bercentang = toko sedotan. Titik pudar dan putus-putus = identitas toko belum ter-mapping. Klik "sembunyikan" untuk melipat legenda.', a:['Klik sembunyikan']},
+  {b:'peta', v:'peta', s:'#map', t:'Klik petak atau titik toko', d:'Klik satu petak untuk membuka kartu detailnya (dibahas di bab Kartu petak). Klik titik toko untuk melihat nama, kode, tier, dan sales yang menggarapnya.', a:['Klik petak', 'Klik titik toko']},
+
+  /* ---------- 3. Panel Saring, Lapisan, Cari toko ---------- */
+  {b:'panel', v:'peta', pre:function(){ tutTab('saring'); }, s:'#petaTabs', t:'Tiga tab panel peta', d:'Saring untuk memilih petak yang tampil, Lapisan untuk peta dasar dan lapisan tambahan, Cari toko untuk daftar toko.', a:['Klik tab']},
+  {b:'panel', v:'peta', pre:function(){ tutTab('saring'); }, s:'#secSaringZona', t:'Saring prioritas', d:'Klik chip A, B, C, atau Sepi untuk menyalakan atau mematikan petak prioritas itu; angkanya = jumlah petak. Centang "Hanya zona pilot" untuk melihat zona pilot saja. "Cara baca warna" membuka penjelasan lengkap.', a:['Klik chip', 'Centang', 'Klik Cara baca warna']},
+  {b:'panel', v:'peta', pre:function(){ tutTab('saring'); }, s:function(){ var f = document.getElementById('fb'); return f && f.parentElement; }, t:'Batas minimal', d:'Bangunan minimal: petak dengan bangunan di bawah angka ini disembunyikan. Peluang ada grosir minimal: petak dengan peluang lebih rendah disembunyikan. Geser ke kanan = petak yang tampil makin sedikit dan makin padat.', a:['Geser slider']},
+  {b:'panel', v:'peta', pre:function(){ tutTab('lapisan'); }, s:'#secPetaDasar', t:'Peta dasar', d:'Pilih latar peta: Terang, OSM, Satelit, Hybrid (Esri + label), atau Google Hybrid (dengan nama tempat). Satelit dan Hybrid membantu melihat atap dan jalan asli.', a:['Pilih']},
+  {b:'panel', v:'peta', pre:function(){ tutTab('lapisan'); }, s:function(){ var l = document.getElementById('lz'); return tutNaik(l, '.col'); }, t:'Lapisan tambahan', d:'Nyalakan atau matikan: Petak prediksi (sakelar ON = petak yang sudah ditugaskan diberi tanda ✓ hijau), Toko terdaftar beserta saring tier A/B/C/D, Atap bangunan, Batas kecamatan, Depo perbatasan, Hasil temuan NOO, dan Petak 4x4 (kotak biru = sudah disisir). Jalan Pacmann muncul kalau data jalan depo tersedia: sakelar ON = jalan yang sudah dilewati sales berwarna teal.', a:['Centang', 'Sakelar ON/OFF']},
+  {b:'panel', v:'peta', pre:function(){ tutTab('cari'); }, post:function(){ tutTab('saring'); }, s:'#ptab-cari', t:'Cari toko', d:'Ketik nama toko, kode outlet, atau nama sales. Pilih jenisnya: Toko existing, NOO berhasil, atau Belum berhasil (ditemui tapi belum jadi NOO). Klik satu baris untuk terbang ke toko itu di peta. Scroll ke bawah dan klik "Tampilkan 60 lagi" untuk memuat lebih banyak.', a:['Ketik', 'Klik baris', 'Scroll']},
+
+  /* ---------- 4. Kartu petak ---------- */
+  {b:'kartu', v:'peta', pre:tutBukaKartu, tunda:450, s:'#petakPanel', t:'Kartu petak', d:'Muncul setelah petak diklik. Dari atas ke bawah: nama desa dan kecamatan, prioritas, prediksi toko, misi Pinpin, angka petak, rute & kehadiran, lalu penugasan. Scroll di dalam kartu untuk melihat semuanya.', a:['Scroll di kartu']},
+  {b:'kartu', v:'peta', pre:tutBukaKartu, s:function(){ return tutBlok('#petakPanel', /Prediksi RT-L/); }, t:'Prediksi toko', d:'Prediksi RT-L dan RT-M/RT-S: berapa toko yang seharusnya ada di petak ini, berapa yang sudah ada, dan berapa peluang tambahannya.'},
+  {b:'kartu', v:'peta', pre:tutBukaKartu, s:function(){ return tutBlok('#petakPanel', /MISI DARI PINPIN/i); }, t:'Misi dari Pinpin', d:'Misi yang sama dengan yang dilihat sales di aplikasinya, misalnya mengganti toko sedotan dengan RT-L dan menelusuri jalan besar. Persentase = kemajuan misi di petak ini.'},
+  {b:'kartu', v:'peta', pre:tutBukaKartu, s:function(){ return tutBlok('#petakPanel', /Bangunan[\s\S]*Toko terdekat/); }, t:'Angka petak', d:'Jumlah bangunan (dan yang besar), toko terdaftar, peluang ada grosir, jarak toko terdekat, serta temuan dan NOO sah di petak ini.'},
+  {b:'kartu', v:'peta', pre:tutBukaKartu, s:'#pcRute', t:'Rute & kehadiran', d:'Klik nama sales untuk memuat jejak GPS hariannya di peta, lalu putar ulang dengan kecepatan 0,5x, 1x, atau 2x. Lingkaran bernomor = titik berhenti 5 menit atau lebih. Garis putus-putus = ada jeda sinyal.', a:['Klik nama sales', 'Putar ulang']},
+  {b:'kartu', v:'peta', pre:tutBukaKartu, s:function(){ var a = [].slice.call(document.querySelectorAll('#petakPanel a')).filter(function(x){ return /Google Maps/.test(x.textContent); })[0]; return a && a.parentElement; }, t:'Google Maps & Street View', d:'Google Maps untuk navigasi ke petak. Street View untuk melihat kondisi jalan dan bangunan dari foto jalanan.', a:['Klik']},
+  {b:'kartu', v:'peta', pre:tutBukaKartu, s:function(){ return tutBlok('#petakPanel', /OTOMATIS DARI JKS[\s\S]*Tambahkan/i) || document.getElementById('petakAssign'); }, t:'Penugasan petak', d:'Sales yang ditugaskan otomatis dari JKS beserta alasannya, lalu progress tiap sales: kotak tersisir dari 16 dan statusnya (belum mulai, sedang, macet, selesai). Untuk pengecualian, pilih sales di "Tambah sales" lalu klik Tambahkan.', a:['Pilih sales', 'Klik Tambahkan']},
+  {b:'kartu', v:'peta', pre:tutBukaKartu, post:tutTutupKartu, s:'#petakTutup', t:'Menutup kartu', d:'Klik tanda silang untuk menutup kartu, atau langsung klik petak lain untuk pindah.', a:['Klik']},
+
+  /* ---------- 5. Gambar area manual ---------- */
+  {b:'gambar', v:'penugasan', s:'#pnBtnDraw', t:'Gambar area manual', d:'Untuk menandai potensi yang tidak tercakup petak otomatis, misalnya pasar atau komplek ruko. Klik "Gambar area di peta": halaman pindah ke Peta dan mode gambar menyala. Seret di peta membentuk area, lepas untuk selesai, lalu isi nama dan alasannya.', a:['Klik', 'Seret di peta', 'Lepas']},
+  {b:'gambar', v:'peta', s:'#map', t:'Cara cepat: tahan klik kanan', d:'Langsung dari Peta tanpa tombol: tahan klik kanan lalu seret. Selama menggambar ada pilihan "Batal", atau tekan Esc. Area yang sudah tersimpan bisa diklik untuk ditugaskan ke sales atau dihapus.', a:['Tahan klik kanan + seret', 'Lepas', 'Esc untuk batal']},
+
+  /* ---------- 6. Ringkasan ---------- */
+  {b:'ringkasan', v:'ringkasan', s:function(){ return tutNaik(document.getElementById('rkSapa'), '.card'); }, t:'Sapaan & tombol cepat', d:'Ringkasan singkat area hari ini. Tombolnya: Lihat zona pilot / penugasan, Cek temuan, Muat ulang data (ambil data terbaru dari server), dan Tutorial.', a:['Klik']},
+  {b:'ringkasan', v:'ringkasan', s:function(){ return ['kpiAssign', 'kpiKotak', 'kpiNoo'].map(function(i){ return document.getElementById(i); }).filter(Boolean); }, t:'Tiga angka utama', d:'Progress jalan dilalui (km jalan besar yang sudah dilewati di petak yang ditugaskan), kotak tersisir, dan NOO sah bulan ini beserta konversinya. NOO sah = temuan "Lanjut NOO" yang punya foto dan titik GPS.'},
+  {b:'ringkasan', v:'ringkasan', s:'#miniWrap', t:'Peta prioritas mini', d:'Gambaran cepat sebaran petak prioritas. Klik petanya untuk membuka peta penuh.', a:['Klik']},
+  {b:'ringkasan', v:'ringkasan', s:function(){ return tutNaik(document.getElementById('rkCorong'), '.card'); }, t:'Tahapan kerja lapangan', d:'Corong dari petak ditugaskan sampai NOO sah. Kotak oranye di bawahnya menunjukkan tahap yang paling banyak bocor.', a:['Scroll ke bawah']},
+  {b:'ringkasan', v:'ringkasan', s:function(){ return tutNaik(document.getElementById('rkSales'), '.card'); }, t:'Sales di lapangan', d:'Per sales: petak aktif, kotak tersisir, dan aktivitas terakhir. Di layar kecil tabelnya bisa digeser ke samping.', a:['Scroll', 'Geser ke samping di HP']},
+  {b:'ringkasan', v:'ringkasan', s:function(){ return tutNaik(document.getElementById('rkTemuan'), '.card'); }, t:'Temuan terbaru', d:'Temuan paling baru dari aplikasi sales. Klik "Semua" untuk ke halaman Temuan & Foto.', a:['Klik Semua']},
+
+  /* ---------- 7. Kinerja Sales ---------- */
+  {b:'kinerja', v:'kinerja', s:function(){ var r = document.getElementById('knRange'); return r && r.parentElement; }, t:'Rentang waktu & Export', d:'Pilih 30 hari atau 7 hari; semua angka di halaman ini ikut berubah. Export Excel mengunduh angka kinerja untuk laporan.', a:['Klik 30 / 7 hari', 'Klik Export Excel']},
+  {b:'kinerja', v:'kinerja', s:'#knKpi', t:'Angka kinerja', d:'Temuan, NOO sah, konversi, kotak tersisir, dan sales aktif, dibanding periode sebelumnya.'},
+  {b:'kinerja', v:'kinerja', s:function(){ return tutNaik(document.getElementById('knChart'), '.card'); }, t:'Temuan per hari', d:'Batang = hasil kunjungan per hari. Garis = kotak tersisir, dijumlah dari awal rentang.', a:['Scroll ke bawah']},
+  {b:'kinerja', v:'kinerja', s:'#knSisir', t:'Progress sisir per sales', d:'Kemajuan menyisir petak A+B milik tiap sales: kotak dan km jalan besar yang sudah dilewati. Klik satu sales untuk pindah ke Peta: Jalan Pacmann langsung menyala dan rute sales itu dibuka. Kartu ini punya scroll sendiri kalau salesnya banyak.', a:['Klik sales', 'Scroll di kartu']},
+  {b:'kinerja', v:'kinerja', s:function(){ return tutNaik(document.getElementById('knRank'), '.card'); }, t:'Peringkat sales', d:'Urut dari NOO sah terbanyak.'},
+  {b:'kinerja', v:'kinerja', s:'#knGagal', t:'Kenapa belum berhasil?', d:'Bedah alasan toko yang sudah ditemui tapi belum jadi NOO, supaya kelihatan apa yang perlu dibantu.'},
+  {b:'kinerja', v:'kinerja', s:'#knOutlet', t:'Omset NOO per tipe outlet', d:'Belanja Nabati yang disebut toko NOO sah, dikelompokkan per tipe outlet.'},
+
+  /* ---------- 8. Temuan & Foto ---------- */
+  {b:'temuan', v:'temuan', s:function(){ var c = document.getElementById('temChips'); return c && c.parentElement; }, t:'Saring & cari temuan', d:'Chip: Semua, NOO sah, Lanjut NOO belum sah, Nanti dikunjungi, Tidak tertarik, Luar petak; angkanya = jumlah temuan. Kolom cari untuk nama toko atau sales.', a:['Klik chip', 'Ketik']},
+  {b:'temuan', v:'temuan', s:'#tgrid', t:'Kartu temuan', d:'Satu kartu = satu temuan dengan foto asli dari aplikasi sales. Klik kartu untuk melihat detail dan lokasinya; klik foto untuk memperbesar. Scroll untuk temuan yang lebih lama. Temuan di luar petak ditandai LUAR PETAK dan tetap dihitung.', a:['Klik kartu', 'Klik foto', 'Scroll']},
+  {b:'temuan', v:'temuan', s:'#tgrid', t:'Report WA', d:'Centang 2 sampai 10 temuan. Bar di bawah layar akan aktif: klik "Buat gambar laporan" untuk membuat satu gambar kolase yang siap dikirim ke WhatsApp.', a:['Centang', 'Klik Buat gambar laporan']},
+  {b:'temuan', v:'temuan', s:'#btnExportTemuan', t:'Export Excel', d:'Unduh daftar temuan ke file Excel untuk laporan.', a:['Klik']},
+
+  /* ---------- 9. Penugasan ---------- */
+  {b:'penugasan', v:'penugasan', s:'#autoJksBox', t:'Penugasan otomatis dari JKS', d:'Semua petak Prioritas A + B ditugaskan otomatis dari JKS. Klik judulnya untuk membuka atau menutup penjelasan aturannya.', a:['Klik untuk buka / tutup']},
+  {b:'penugasan', v:'penugasan', s:'#kanban', t:'Papan penugasan', d:'Tiga kolom yang bergeser sendiri mengikuti progress sisir: Ditugaskan, Sedang disisir, Selesai.', a:['Scroll']},
+  {b:'penugasan', v:'penugasan', s:function(){ var b = document.getElementById('pnBtnAssign'); return b && b.parentElement; }, t:'Assign manual & gambar area', d:'Assign petak: pilih sales lalu cari petaknya (desa, kecamatan, atau kode petak). Gambar area di peta: pindah ke Peta dan langsung mulai menggambar. Keduanya untuk pengecualian.', a:['Klik']},
+  {b:'penugasan', v:'penugasan', s:'#cardBeban', t:'Beban sales', d:'Satu batang = satu petak aktif. Sales dengan batang paling sedikit = kandidat berikutnya. "Kelola daftar sales" membuka halaman Daftar Sales.', a:['Klik']},
+  {b:'penugasan', v:'penugasan', s:function(){ var x = document.getElementById('saranBox'); return x && x.firstElementChild; }, t:'Saran penugasan', d:'Usulan sales yang sebaiknya mendapat petak berikutnya, memakai aturan yang sama.'},
+
+  /* ---------- 10. Daftar Sales ---------- */
+  {b:'sales', v:'sales', s:'#rosterTbl', t:'Daftar sales', d:'Semua sales di area ini, terisi otomatis dari JKS. Tombol × di ujung baris menghapus sales dari daftar.', a:['Klik ×']},
+  {b:'sales', v:'sales', s:'.addrow', t:'Tambah satu sales', d:'Isi kode sales dan nama lengkap, lalu klik Tambah. Sales bisa langsung login di aplikasi dengan kodenya.', a:['Ketik', 'Klik Tambah']},
+  {b:'sales', v:'sales', s:function(){ return tutNaik(document.getElementById('salesEditor'), 'details'); }, t:'Isi banyak sekaligus', d:'Buka "Edit massal" untuk menempel banyak sales sekaligus, satu baris satu sales (format kode,nama), lalu klik Simpan daftar sales.', a:['Klik untuk buka', 'Tempel', 'Klik Simpan']},
+
+  /* ---------- 11. Akun ---------- */
+  {b:'akun', pre:function(){ tutMenuDepo(true); }, post:function(){ tutMenuDepo(false); }, s:function(){ var p = document.querySelector('.slsel-pop'); return p && (p.querySelector('[data-gantipw]') || p.querySelector('.logout')) ? p : null; }, t:'Ganti password & logout', d:'Di bagian bawah menu area: Ganti password (minimal 8 karakter, hanya untuk akun pribadi) dan Logout / ganti user untuk kembali ke halaman masuk.', a:['Klik']},
+  {b:'akun', s:'#btnHdrTut', t:'Selesai', d:'Itu semua bagian dashboard. Buka tombol Tutorial kapan saja untuk mengulang satu bab.'},
+
+  /* ---------- 12. Super Admin ---------- */
+  {b:'sa', sa:true, v:'admin', s:'#tabs', t:'Tab Super Admin', d:'Saat mode Super Admin aktif, tab Super Admin muncul di menu utama. Masuk Super Admin lewat halaman login ("masuk sebagai Super Admin").'},
+  {b:'sa', sa:true, v:'admin', s:function(){ var r = document.getElementById('adReg'); return r && r.parentElement; }, t:'Saring region & cari depo', d:'Pilih Semua, R08, atau R13, atau ketik nama depo.', a:['Klik', 'Ketik']},
+  {b:'sa', sa:true, v:'admin', s:function(){ return tutNaik(document.getElementById('adTbl'), 'section'); }, t:'Tabel semua depo', d:'Bandingkan kemajuan antar depo dalam satu tabel. Di layar kecil, geser ke samping untuk kolom lainnya.', a:['Scroll', 'Geser ke samping']},
+  {b:'sa', sa:true, v:'admin', s:function(){ return tutNaik(document.getElementById('btnAdminSbx'), 'section'); }, t:'Alat Super Admin', d:'Sandbox TESTING untuk mengecek jejak HP tester, dan Impor roster bawaan untuk memuat ulang daftar sales awal. Gunakan dengan hati-hati.'}
+];
+var TUT_AKTIF = [], tourIdx = 0, TUT_ARAH = 1, TUT_POST = null, TUT_LONCAT = 0, TOUR_RETRY_MS = 120, TOUR_RETRY_MAX = 12;
+function tutBolehSA(){ return !!SUPER_ADMIN; }
+function tutLangkahBab(id){ return TOUR_STEPS.filter(function(s){ return s.b === id && (!s.sa || tutBolehSA()); }); }
+function tutBabTampil(){ return TUT_BAB.filter(function(b){ return (!b.sa || tutBolehSA()) && tutLangkahBab(b.id).length; }); }
+function tourAda(el){ return !!el && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden'; }
 function tourCari(s, cb, attempt){
   attempt = attempt || 0;
-  var t = document.querySelector(s.sel);
-  if(!tourAda(t)){
+  var t = tutEl(s.s);
+  if(Array.isArray(t)){ t = t.filter(tourAda); if(!t.length) t = null; }
+  var t0 = Array.isArray(t) ? t[0] : t;
+  if(!tourAda(t0)){
     if(attempt >= TOUR_RETRY_MAX){ cb(null); return; }
     setTimeout(function(){ tourCari(s, cb, attempt + 1); }, TOUR_RETRY_MS); return;
   }
-  var r0 = t.getBoundingClientRect(); t.style.scrollMarginTop = '88px';
-  t.scrollIntoView({block:r0.height > innerHeight * .6 ? 'start' : 'center', behavior:'auto'});
+  if(!t0.closest('.top') && !t0.closest('.slsel-pop') && !t0.closest('#hpPop') && !t0.closest('.cari-ov')){
+    var r0 = t0.getBoundingClientRect(); t0.style.scrollMarginTop = '88px';
+    t0.scrollIntoView({block:r0.height > innerHeight * .6 ? 'start' : 'center', behavior:'auto'});
+  }
   requestAnimationFrame(function(){ requestAnimationFrame(function(){ cb(t); }); });
 }
-function startTour(){
-  tourIdx = 0;
+function bukaPusatTutorial(){
+  if(!D && !DEPOT){ toast('Masuk ke salah satu area dulu, lalu buka Tutorial.'); return; }
+  if($('#tour').classList.contains('show')) endTour();
+  var babs = tutBabTampil();
+  var html = '<h3>Tutorial dashboard</h3><div class="tut-sub">Pilih bab untuk mulai dari situ, atau mulai dari awal. Tutorial cuma menunjukkan letak dan cara pakai; data dan saringanmu tidak diubah. Selama tutorial berjalan kamu tetap bisa mengklik halaman.</div><div class="tut-list">' +
+    babs.map(function(b, k){
+      var sudah = false; try{ sudah = localStorage.getItem('sl2_tut_' + b.id) === '1'; }catch(e){}
+      return '<button type="button" class="tut-it' + (sudah ? ' done' : '') + '" data-tutbab="' + b.id + '"><span class="tut-no">' + (sudah ? '✓' : (k + 1)) + '</span><span class="tut-tx"><b>' + esc(b.n) + '</b><span>' + esc(b.d) + '</span></span><span class="tut-n">' + tutLangkahBab(b.id).length + ' langkah</span></button>';
+    }).join('') + '</div><div class="mact"><button class="btn btn-gh" type="button" data-tuttutup="1">Tutup</button><button class="btn btn-or" type="button" data-tutbab="' + babs[0].id + '">Mulai dari awal</button></div>';
+  $('#tutHubBox').innerHTML = html;
+  $('#modalTut').classList.add('show');
+}
+document.addEventListener('click', function(e){
+  var b = e.target.closest && e.target.closest('[data-tutbab]');
+  if(b){ $('#modalTut').classList.remove('show'); mulaiTutorial(b.getAttribute('data-tutbab')); return; }
+  if(e.target.closest && e.target.closest('[data-tuttutup]')) $('#modalTut').classList.remove('show');
+});
+function mulaiTutorial(babId){
+  var babs = tutBabTampil(), i0 = 0;
+  babs.forEach(function(b, k){ if(b.id === babId) i0 = k; });
+  TUT_AKTIF = [];
+  babs.slice(i0).forEach(function(b){ TUT_AKTIF = TUT_AKTIF.concat(tutLangkahBab(b.id)); });
+  if(!TUT_AKTIF.length) return;
+  tourIdx = 0; TUT_ARAH = 1; TUT_LONCAT = 0;
   var w = $('#tourWelcome'); if(w) w.classList.remove('show');
   $('#tour').classList.add('show');
   showTourStep();
 }
+function startTour(){ mulaiTutorial(TUT_BAB[0].id); }
+function tutJalankanPost(){ if(TUT_POST){ var f = TUT_POST; TUT_POST = null; try{ f(); }catch(e){} } }
 function endTour(){
+  tutJalankanPost();
   $('#tour').classList.remove('show');
   try{ localStorage.setItem('skylens_dashboard_tour_done', '1'); }catch(e){}
 }
+function tutTandaiBab(s){ var n = TUT_AKTIF[tourIdx + 1]; if(!n || n.b !== s.b){ try{ localStorage.setItem('sl2_tut_' + s.b, '1'); }catch(e){} } }
 function showTourStep(){
-  var s = TOUR_STEPS[tourIdx];
+  var s = TUT_AKTIF[tourIdx];
+  if(!s){ endTour(); return; }
   if(!D && !DEPOT){ endTour(); return; }
-  if(s.view === 'admin' && !SUPER_ADMIN){ tourNext(); return; }
-  if(VIEW !== s.view) goView(s.view, {noAnim:true, keepScroll:true});
+  tutJalankanPost();
+  if(s.v && VIEW !== s.v) goView(s.v, {noAnim:true, keepScroll:true});
+  TUT_POST = s.post || null;
+  setTimeout(function(){
+    if(s !== TUT_AKTIF[tourIdx]) return;
+    if(s.pre){ try{ s.pre(); }catch(e){} }
+    setTimeout(function(){ tutTarget(s); }, s.tunda || 80);
+  }, 0);
+}
+function tutTarget(s){
   tourCari(s, function(t){
-    if(!t){ if(tourIdx < TOUR_STEPS.length - 1){ tourIdx++; showTourStep(); } else endTour(); return; }
-    var r = t.getBoundingClientRect(), pad = 6, vw = innerWidth, vh = innerHeight;
-    var hdr = $('.top'), hb = (hdr && !t.closest('.top') && getComputedStyle(hdr).position === 'sticky') ? hdr.getBoundingClientRect().bottom + 6 : 6;
+    if(s !== TUT_AKTIF[tourIdx]) return;
+    if(!t){
+      /* bagian ini tidak ada di layar (mis. data kosong / layar HP): lompati ke arah yang sama */
+      if(++TUT_LONCAT > TUT_AKTIF.length){ endTour(); return; }
+      var n = tourIdx + TUT_ARAH;
+      if(n < 0 || n >= TUT_AKTIF.length){ if(n >= TUT_AKTIF.length) tutTandaiBab(s); endTour(); return; }
+      tourIdx = n; showTourStep(); return;
+    }
+    TUT_LONCAT = 0;
+    var els = Array.isArray(t) ? t : [t], t0 = els[0];
+    var r = els.map(function(e){ return e.getBoundingClientRect(); }).reduce(function(a, b){ return {left:Math.min(a.left, b.left), top:Math.min(a.top, b.top), right:Math.max(a.right, b.right), bottom:Math.max(a.bottom, b.bottom)}; });
+    r.width = r.right - r.left; r.height = r.bottom - r.top;
+    var pad = 6, vw = innerWidth, vh = innerHeight;
+    var hdr = $('.top'), hb = (hdr && !t0.closest('.top') && !t0.closest('.slsel-pop') && getComputedStyle(hdr).position === 'sticky') ? hdr.getBoundingClientRect().bottom + 6 : 6;
     var top0 = Math.max(hb, r.top - pad), bot0 = Math.min(vh - 6, r.bottom + pad);
     var sp = $('#tourSpot');
     sp.style.left = (r.left - pad) + 'px'; sp.style.top = top0 + 'px'; sp.style.width = (r.width + pad * 2) + 'px'; sp.style.height = Math.max(24, bot0 - top0) + 'px';
-    $('#tourStep').textContent = (tourIdx + 1) + ' DARI ' + TOUR_STEPS.length;
-    $('#tourTitle').textContent = s.title; $('#tourDesc').textContent = s.desc;
+    var bab = TUT_BAB.filter(function(b){ return b.id === s.b; })[0];
+    var babs = tutBabTampil().map(function(b){ return b.id; });
+    $('#tourBab').textContent = 'Bab ' + (babs.indexOf(s.b) + 1) + ' · ' + (bab ? bab.n : '');
+    $('#tourStep').textContent = 'Langkah ' + (tourIdx + 1) + ' dari ' + TUT_AKTIF.length;
+    $('#tourProg').style.width = Math.round((tourIdx + 1) / TUT_AKTIF.length * 100) + '%';
+    $('#tourTitle').textContent = s.t; $('#tourDesc').textContent = s.d;
+    $('#tourAksi').innerHTML = (s.a || []).map(function(x){ return '<span>' + esc(x) + '</span>'; }).join('');
     $('#tourPrev').style.visibility = tourIdx === 0 ? 'hidden' : 'visible';
-    $('#tourNext').textContent = tourIdx === TOUR_STEPS.length - 1 ? 'Selesai ✓' : 'Lanjut ›';
+    $('#tourNext').textContent = tourIdx === TUT_AKTIF.length - 1 ? 'Selesai ✓' : 'Lanjut ›';
     var tip = $('#tourTip'); tip.style.visibility = 'hidden';
     requestAnimationFrame(function(){
       var tw = tip.offsetWidth, th = tip.offsetHeight, gap = 14, left, top;
-      if(r.height > vh * .6 || r.width > vw * .8){ left = Math.max(12, vw - tw - 20); top = Math.max(12, vh - th - 20); }
+      if(vw < 600){ left = Math.max(8, (vw - tw) / 2); top = (r.top + r.height / 2 < vh / 2) ? Math.max(8, vh - th - 12) : 8; }
+      else if(r.height > vh * .6 || r.width > vw * .8){ left = Math.max(12, vw - tw - 20); top = Math.max(12, vh - th - 20); }
       else if(r.right + gap + tw < vw){ left = r.right + gap; top = Math.max(12, Math.min(r.top, vh - th - 12)); }
       else if(r.bottom + gap + th < vh){ left = Math.max(12, Math.min(r.left, vw - tw - 12)); top = r.bottom + gap; }
       else if(r.left - gap - tw > 0){ left = r.left - gap - tw; top = Math.max(12, Math.min(r.top, vh - th - 12)); }
@@ -5905,18 +6122,20 @@ function showTourStep(){
     });
   });
 }
-function tourNext(){ if(tourIdx >= TOUR_STEPS.length - 1) return endTour(); tourIdx++; showTourStep(); }
-function tourPrev(){ if(tourIdx <= 0) return; tourIdx--; showTourStep(); }
-window.addEventListener('resize', function(){ if(!$('#tour').classList.contains('show')) return; cancelAnimationFrame(window.__trz); window.__trz = requestAnimationFrame(showTourStep); });
+function tourNext(){ var s = TUT_AKTIF[tourIdx]; if(s) tutTandaiBab(s); if(tourIdx >= TUT_AKTIF.length - 1) return endTour(); TUT_ARAH = 1; tourIdx++; showTourStep(); }
+function tourPrev(){ if(tourIdx <= 0) return; TUT_ARAH = -1; tourIdx--; showTourStep(); }
+window.addEventListener('resize', function(){ if(!$('#tour').classList.contains('show')) return; cancelAnimationFrame(window.__trz); window.__trz = requestAnimationFrame(function(){ var s = TUT_AKTIF[tourIdx]; if(s) tutTarget(s); }); });
 document.addEventListener('keydown', function(e){
-  if(!$('#tour').classList.contains('show')) return;
-  if(e.key === 'Escape') endTour(); else if(e.key === 'ArrowRight' || e.key === 'Enter') tourNext(); else if(e.key === 'ArrowLeft') tourPrev();
+  if(!e.isTrusted || !$('#tour').classList.contains('show')) return;
+  if(e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;   /* biar bisa mengetik di kolom cari selama tutorial */
+  if(e.key === 'Escape') endTour(); else if(e.key === 'ArrowRight') tourNext(); else if(e.key === 'ArrowLeft') tourPrev();
 });
 function mungkinTampilkanTourWelcome(){
   var sudah = false; try{ sudah = localStorage.getItem('skylens_dashboard_tour_done') === '1'; }catch(e){}
   var w = $('#tourWelcome'); if(w) w.classList.toggle('show', !sudah);
 }
 window.ulangiTutorialDashboard = function(){ try{ localStorage.removeItem('skylens_dashboard_tour_done'); }catch(e){} mungkinTampilkanTourWelcome(); };
+window.bukaPusatTutorial = bukaPusatTutorial;
 
 /* ================= EVENT & BOOT ================= */
 function tutupPopup(){ var a = $('#gsearchPop'), b = $('#bellPop'); if(a) a.hidden = true; if(b) b.hidden = true; }
@@ -5948,7 +6167,7 @@ document.addEventListener('click', function(e){
   if((el = t.closest('[data-rtcal]'))){ ruteKalender(el); return; }
   if((el = t.closest('[data-rtday]'))){ if(!el.disabled) ruteGantiHari(parseInt(el.dataset.rtday)); return; }
   if((el = t.closest('[data-stop]'))){ ruteFokusStop(parseInt(el.dataset.stop)); return; }
-  if((el = t.closest('[data-sales]'))){ bukaRuteSales(el.dataset.sales); return; }
+  if((el = t.closest('[data-sales]'))){ if(el.dataset.pacman) nyalakanPacman(); bukaRuteSales(el.dataset.sales); return; }
   if((el = t.closest('[data-temuan]'))){ bukaTemuan(el.dataset.temuan); return; }
   if((el = t.closest('[data-sk]'))){ pilihHasilCari(el.dataset.sk, el.dataset.sv); return; }
   if((el = t.closest('[data-tf]'))){ TM_F = el.dataset.tf; TM_LIM = 24; renderTemuan(true); return; }
@@ -6039,7 +6258,9 @@ document.addEventListener('keydown', function(e){
   on('gsearch', 'keydown', function(e){ if(e.key === 'Enter'){ var b = $('#gsearchPop button[data-sk]'); if(b) b.click(); } });
   on('rkBtnPilot', 'click', mulaiPilot);
   on('btnMuatUlang', 'click', muatUlangSemua);
-  on('btnTutorialDash', 'click', startTour);
+  on('btnTutorialDash', 'click', bukaPusatTutorial);
+  on('btnHdrTut', 'click', bukaPusatTutorial);
+  on('tourHubBtn', 'click', function(){ endTour(); bukaPusatTutorial(); });
   on('twStart', 'click', startTour);
   on('twTrial', 'click', function(){ $('#tourWelcome').classList.remove('show'); try{ localStorage.setItem('skylens_dashboard_tour_done', '1'); }catch(e){} });
   on('twSkip', 'click', function(){ $('#tourWelcome').classList.remove('show'); try{ localStorage.setItem('skylens_dashboard_tour_done', '1'); }catch(e){} });
