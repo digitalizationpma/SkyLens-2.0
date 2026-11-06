@@ -1041,6 +1041,7 @@ body.fit-peta .subnav{display:none!important}
 .tut-hub .mact{justify-content:space-between;flex-wrap:wrap}
 .sisir-klik{cursor:pointer;border-radius:12px;padding:6px 8px;margin:-6px -8px;transition:background .15s}
 .sisir-klik:hover,.sisir-klik:focus-visible{background:var(--bg);outline:none}
+.tag-manual{display:inline-block;margin-left:7px;padding:1px 7px;border-radius:7px;font-size:10.5px;font-weight:700;letter-spacing:.3px;color:#B84A00;background:rgba(254,122,27,.14);border:1px solid rgba(254,122,27,.4);vertical-align:1px}
 </style>
 </head>
 <body>
@@ -1577,6 +1578,13 @@ let ATAP_BARIS = null;      // cache lapisan atap depot aktif (di-reset tiap gan
 // ===================== SALES LIST (bisa diedit user, per depot) =====================
 /* SkyLens 2.0 fokus GDKDA: sales AEPDA & GLKDA tidak ditampilkan / tidak ditugaskan (editor roster tetap memuat semua) */
 function fokusGdk(L){ return (L || []).filter(function(s){ var n = String(s[1] || '').trim(); return !/^(AEPDA|GLKDA)\b/i.test(n) && !/\bVACANT\b/i.test(n); }); }
+/* "manual" = kode tidak ada di JKS bawaan area ini (ditambahkan lewat dashboard). Manajer (RBM/BM/ASS) tidak diberi tanda. */
+function salesManual(kode, dep){
+  dep = dep || (DEPOT === '__ALL__' ? SUPER_ADMIN_EDIT_DEPOT : DEPOT);
+  if(!dep || /^(RBM|BM|ASS)-/i.test(String(kode))) return false;
+  return !(TX2_ROSTER[dep] || []).some(function(s){ return String(s[0]) === String(kode); });
+}
+function tagManual(kode, dep){ return salesManual(kode, dep) ? ' <span class="tag-manual" title="Ditambahkan manual lewat dashboard, bukan dari JKS">manual</span>' : ''; }
 function kunciSales(dep){ return 'skylens_sales_v1_' + dep.replace(/\s+/g,'_'); }
 async function muatSalesList(dep){
   var defaultRoster = (TX2_ROSTER[dep]||[]).map(function(s){ return [String(s[0]), s[1]]; });
@@ -1585,6 +1593,7 @@ async function muatSalesList(dep){
     const { data, error } = await sb.from('sales_roster').select('kode, nama').eq('depot', dep).order('nama');
     if(!error && data && data.length){
       SALES_LIST = data.map(function(r){ return [String(r.kode), r.nama]; });
+      setTimeout(function(){ cekRosterTertahan(dep, SALES_LIST); }, 1200);
     } else if(!error && (!data || !data.length)){
       try{
         const raw = localStorage.getItem(kunciSales(dep));
@@ -1601,6 +1610,30 @@ async function muatSalesList(dep){
   }
   document.getElementById('salesEditor').value = SALES_LIST.map(function(s){ return s[0]+','+s[1]; }).join('\n');
   SALES_LIST = fokusGdk(SALES_LIST);
+}
+/* Sales yang dulu "tersimpan" hanya di browser ini (server menolak) -> tawarkan kirim ke server sekali per area per sesi. */
+var _tertahanDicek = {};
+async function cekRosterTertahan(dep, daftarServer){
+  if(_tertahanDicek[dep]) return; _tertahanDicek[dep] = 1;
+  try{
+    var ada = {}; daftarServer.forEach(function(s){ ada[String(s[0])] = 1; });
+    var tahan = [];
+    ['skylens_roster_tertahan_' + dep.replace(/\s+/g,'_'), kunciSales(dep)].forEach(function(k){
+      var raw = localStorage.getItem(k); var arr = raw ? JSON.parse(raw) : [];
+      (arr || []).forEach(function(s){
+        var kode = String(s[0] || '').trim(), nama = String(s[1] || '').trim();
+        if(!kode || !nama || ada[kode] || /^(RBM|BM|ASS)-/i.test(kode) || tahan.some(function(x){ return x.kode === kode; })) return;
+        tahan.push({kode:kode, nama:nama});
+      });
+    });
+    if(!tahan.length) return;
+    var daftar = tahan.slice(0, 6).map(function(s){ return s.nama + ' (' + s.kode + ')'; }).join(', ') + (tahan.length > 6 ? ', dst.' : '');
+    if(!(await tanyaYa(tahan.length + ' sales di ' + dep + ' hanya tersimpan di browser ini dan belum ada di server, jadi belum muncul di APK: ' + daftar + '. Kirim ke server sekarang?', 'Ya, kirim'))) return;
+    await simpanRosterKeServer(dep, daftarServer.map(function(s){ return {kode:s[0], nama:s[1]}; }).concat(tahan));
+    try{ localStorage.removeItem('skylens_roster_tertahan_' + dep.replace(/\s+/g,'_')); }catch(e){}
+    await muatSalesList(dep); isiDropdownUmum(); try{ perbarui(); }catch(e){}
+    toast(tahan.length + ' sales dikirim ke server dan sekarang muncul di APK.');
+  }catch(e){ toast('Gagal mengirim sales tertahan: ' + (e && e.message ? e.message : e)); }
 }
 async function pilihDepotRosterSuperAdmin(dep){
   SUPER_ADMIN_EDIT_DEPOT = dep || null;
@@ -1635,15 +1668,33 @@ function parseRoster(txt, depotKey){
   return out;
 }
 async function simpanRosterKeServer(target, items){
+  /* Anon tidak punya hak UPDATE kolom "kode", jadi upsert (yang ikut menulis kode) selalu ditolak.
+     Jalur aman: kode baru = INSERT, kode lama = UPDATE nama/area/aktif saja (tanpa menyentuh kode). */
   var kodeBaru = items.map(function(s){ return s.kode; });
   const ada = await sb.from('sales_roster').select('kode').eq('depot', target);
   if(ada.error) throw ada.error;
   var hapus = (ada.data||[]).map(function(r){ return r.kode; }).filter(function(k){ return kodeBaru.indexOf(k) < 0; });
   if(hapus.length){ const d = await sb.from('sales_roster').delete().in('kode', hapus); if(d.error) throw d.error; }
-  if(items.length){
-    const up = await sb.from('sales_roster').upsert(items.map(function(s){ return {depot:target, kode:s.kode, nama:s.nama}; }), {onConflict:'kode'});
+  if(!items.length) return [];
+  const sdh = await sb.from('sales_roster').select('kode, nama, depot, aktif').in('kode', kodeBaru);
+  if(sdh.error) throw sdh.error;
+  var peta = {}; (sdh.data||[]).forEach(function(r){ peta[String(r.kode)] = r; });
+  var baru = [], ubah = [];
+  items.forEach(function(s){
+    var r = peta[String(s.kode)];
+    if(!r) baru.push({depot:target, kode:s.kode, nama:s.nama});
+    else if(r.nama !== s.nama || r.depot !== target || r.aktif === false) ubah.push(s);
+  });
+  if(baru.length){ const ins = await sb.from('sales_roster').insert(baru); if(ins.error) throw ins.error; }
+  for(var n = 0; n < ubah.length; n++){
+    const up = await sb.from('sales_roster').update({nama:ubah[n].nama, depot:target, aktif:true}).eq('kode', ubah[n].kode);
     if(up.error) throw up.error;
   }
+  /* cek ulang: semua kode benar-benar ada di server */
+  const cek = await sb.from('sales_roster').select('kode').eq('depot', target).in('kode', kodeBaru);
+  if(cek.error) throw cek.error;
+  var ok = (cek.data||[]).length;
+  if(ok < kodeBaru.length) throw new Error('hanya ' + ok + ' dari ' + kodeBaru.length + ' sales yang tercatat di server');
   return [];
 }
 async function simpanSalesList(){
@@ -1654,9 +1705,9 @@ async function simpanSalesList(){
   }
   var items = parseRoster(document.getElementById('salesEditor').value, targetDepotRoster);
   var parsed = items.map(function(s){ return [s.kode, s.nama]; });
-  localStorage.setItem(kunciSales(targetDepotRoster), JSON.stringify(parsed));
   try{
     await simpanRosterKeServer(targetDepotRoster, items);
+    try{ localStorage.setItem(kunciSales(targetDepotRoster), JSON.stringify(parsed)); }catch(e0){}
     var infoPin = '';
     if(DEPOT === '__ALL__'){
       await muatSalesListSemuaDepot();
@@ -1669,8 +1720,9 @@ async function simpanSalesList(){
       toast('Daftar sales tersimpan (' + SALES_LIST.length + ' sales) — udah ke-sync ke Supabase.' + infoPin);
     }
   }catch(e){
+    try{ localStorage.setItem('skylens_roster_tertahan_' + targetDepotRoster.replace(/\s+/g,'_'), JSON.stringify(parsed)); }catch(e0){}
     if(DEPOT !== '__ALL__'){ SALES_LIST = fokusGdk(parsed); isiDropdownUmum(); perbarui(); }
-    toast('Kesimpen di browser ini doang (belum sync ke server): ' + e.message);
+    toast('GAGAL tersimpan di server, jadi sales ini BELUM muncul di APK: ' + (e && e.message ? e.message : e) + '. Coba simpan lagi, atau kabari Kevin.');
   }
 }
 // Super Admin: masukkan roster JKS bawaan (133 sales, 27 area) ke server sekali jalan
@@ -2991,7 +3043,7 @@ function isiDropdownUmum(){
     var sel = document.getElementById(id);
     sel.innerHTML = '<option value="">— Pilih sales —</option>';
     SALES_LIST.forEach(function(s){
-      var o = document.createElement('option'); o.value=s[0]; o.textContent=s[1]; sel.appendChild(o);
+      var o = document.createElement('option'); o.value=s[0]; o.textContent=s[1] + (salesManual(s[0]) ? ' (manual)' : ''); sel.appendChild(o);
     });
   });
   document.getElementById('selectZonaSearch').value = '';
@@ -5851,7 +5903,7 @@ function rosterRender(){
   M.sales.forEach(function(s){ by[s.kode] = s; });
   box.innerHTML = head + (list.length ? list.map(function(s, i){
     var m = by[s.kode] || {};
-    return '<div class="tr"><span class="mono" style="font-size:12.5px">' + esc(s.kode) + '</span><span class="row" style="gap:10px"><span class="avatar">' + esc(inisial(s.nama)) + '</span><b>' + esc(s.nama) + '</b></span><span class="mono">' + (assignedKeysBySales[s.kode] || []).length + '</span><span class="muted" style="font-size:12.5px">' + (m.last ? lalu(m.last) : '—') + '</span>' +
+    return '<div class="tr"><span class="mono" style="font-size:12.5px">' + esc(s.kode) + '</span><span class="row" style="gap:10px"><span class="avatar">' + esc(inisial(s.nama)) + '</span><b>' + esc(s.nama) + '</b>' + tagManual(s.kode) + '</span><span class="mono">' + (assignedKeysBySales[s.kode] || []).length + '</span><span class="muted" style="font-size:12.5px">' + (m.last ? lalu(m.last) : '—') + '</span>' +
       '<button class="icon-btn" style="width:34px;height:34px" type="button" data-hapussales="' + i + '" aria-label="Hapus ' + esc(s.nama) + ' dari daftar">' + ico('trash', 'width:16px;height:16px') + '</button></div>';
   }).join('') : '<div style="padding:8px">' + empty('Belum ada sales', 'Tambahkan sales pertama lewat isian di bawah.', 'tidur') + '</div>');
 }
