@@ -6651,7 +6651,7 @@ function lapTabelIndikator(ctx, W, y, R){
     ctx.fillText(r[2] == null ? '–' : r[5](r[2]), cT, y + 50);
     ctx.fillStyle = r[6] ? '#9A3A06' : '#1C212D'; lapFont(ctx, r[6] ? '800' : '700', r[6] ? 28 : 25); ctx.fillText(r[5](r[3]), cR, y + 50);
     if(r[4] != null){
-      ctx.textAlign = 'left'; lapBar(ctx, cB, y + 40, 120, r[4], lapWarna(r[4]));
+      ctx.textAlign = 'left'; lapBar(ctx, cB, y + 40, 100, r[4], lapWarna(r[4]));
       ctx.textAlign = 'right'; ctx.fillStyle = lapWarna(r[4]); lapFont(ctx, '800', 26); ctx.fillText(r[4] + '%', cP, y + 50);
     } else if(r[0].indexOf('belum') >= 0 && (R.gagal + R.noo) > 0){
       ctx.fillStyle = '#5E6678'; lapFont(ctx, '700', 21); ctx.fillText(Math.round(R.gagal / (R.gagal + R.noo) * 100) + '% dari ' + (R.gagal + R.noo), cP, y + 50);
@@ -6728,7 +6728,8 @@ async function lapGambarDepo(R, fotoPilih){
       ctx.fillStyle = '#FE7A1B'; lapRR(ctx, x + 12, y + 12, tw, 30, 8); ctx.fill(); ctx.fillStyle = '#FFFFFF'; ctx.fillText(tg, x + 21, y + 33);
       if(t.ukuran_toko){ var uw = ctx.measureText(t.ukuran_toko).width + 18; ctx.fillStyle = '#1F2C4F'; lapRR(ctx, x + cw - 12 - uw, y + 12, uw, 30, 8); ctx.fill(); ctx.fillStyle = '#FFFFFF'; ctx.fillText(t.ukuran_toko, x + cw - 3 - uw, y + 33); }
       ctx.fillStyle = '#1C212D'; lapFont(ctx, '800', 21); ctx.fillText(lapPotong(ctx, t.nama_toko || 'Tanpa nama', cw - 28), x + 14, y + ih + 34);
-      ctx.fillStyle = '#5E6678'; lapFont(ctx, '500', 17); ctx.fillText(lapPotong(ctx, namaPendek(namaSalesDari(t.kode_salesman)) + ' · ' + wibJam(t.tanggal), cw - 28), x + 14, y + ih + 60);
+      ctx.fillStyle = '#5E6678'; lapFont(ctx, '500', 17); var nmS = (R.baris.filter(function(b){ return b.kode === String(t.kode_salesman); })[0] || {}).nama || namaSalesDari(t.kode_salesman);
+      ctx.fillText(lapPotong(ctx, namaPendek(nmS) + ' · ' + wibJam(t.tanggal), cw - 28), x + 14, y + ih + 60);
       if(Number(t.nominal_order) > 0){ ctx.fillStyle = '#9A3A06'; lapFont(ctx, '800', 18); ctx.fillText('Order ' + lapRp(t.nominal_order), x + 14, y + ih + 86); }
     });
     y += 400;
