@@ -968,6 +968,48 @@ body.fit-peta .subnav{display:none!important}
 .tgl-sub{margin:-2px 0 4px 30px;gap:10px;align-items:center}
 .tgl-sub .sub-t{flex:1;font-size:12px;color:var(--muted);font-weight:600;line-height:1.35}
 .tgl-sub .swt{width:50px;height:22px}.tgl-sub .swt i{width:16px;height:16px;top:3px}.tgl-sub .swt:has(input:checked) i{left:31px}.tgl-sub .swt b{font-size:9.5px}
+/* v31: lapisan Petak searah JKS */
+.jksgrp{margin-top:6px;border:1.5px solid var(--or);border-radius:14px;padding:10px 10px 12px;background:var(--or-soft2)}
+.jksbaru{font-size:9.5px;font-weight:800;letter-spacing:.08em;background:var(--or-ink);color:#fff;border-radius:6px;padding:2px 6px;margin-left:6px;vertical-align:1px}
+.jksbar{position:absolute;top:54px;left:14px;z-index:620;display:flex;flex-direction:column;gap:8px;max-width:calc(100% - 90px)}
+.jksbar[hidden],.jkspanel[hidden]{display:none}
+.jksrow{display:flex;gap:4px;align-items:center;align-self:flex-start;max-width:100%;overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px 7px;box-shadow:var(--shadow2)}
+.jksrow .tt{white-space:nowrap;font-weight:700;font-size:12.5px;padding:0 6px 0 4px;color:var(--ink)}
+.jkschip{border:1px solid var(--line);background:var(--tint);color:var(--ink);border-radius:10px;padding:5px 8px;font:600 12px var(--f-ui);display:inline-flex;gap:5px;align-items:center;white-space:nowrap;cursor:pointer;line-height:1.1}
+.jkschip small{font-weight:500;color:var(--muted);font-size:11px}
+.jkschip.on{background:var(--or);border-color:var(--or);color:#fff}
+.jkschip.on small{color:#FFE3CF}
+.jkschip .hi{background:var(--or);color:#fff;font-size:9px;font-weight:800;border-radius:6px;padding:2px 5px;letter-spacing:.05em}
+.jkschip.on .hi{background:#fff;color:var(--or-ink)}
+.jkswk .jkschip{border-color:transparent;background:transparent}
+.jkswk .jkschip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.jkspanel{position:absolute;right:14px;top:112px;z-index:620;width:330px;max-width:calc(100% - 28px);max-height:calc(100% - 126px);overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;border-radius:18px;box-shadow:var(--shadow2)}
+.jkspanel .jh1{font-size:16px;font-weight:800;line-height:1.25;color:var(--ink)}
+.jkspanel .jkp{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.jkspanel .jkp>div{background:var(--tint);border-radius:12px;padding:8px 10px}
+.jkspanel .jkp>div.or{background:var(--hero);color:#fff}
+.jkspanel .jkp span{font-size:11px;color:var(--muted);display:block}
+.jkspanel .jkp .or span{color:#FFE1CC}
+.jkspanel .jkp b{font-size:20px;font-weight:800;display:block;margin-top:1px}
+.jksrowS{display:flex;align-items:center;gap:9px;padding:8px 8px;border-radius:12px;border:1px solid transparent;cursor:pointer;text-align:left;width:100%;background:transparent;font-family:inherit;color:var(--ink)}
+.jksrowS:hover{background:var(--tint)}
+.jksrowS.sel{border-color:var(--navy2);background:var(--tint)}
+.jksrowS.dim{opacity:.45}
+.jksrowS .sw{width:12px;height:12px;border-radius:4px;flex:0 0 12px}
+.jksrowS .nm{font-weight:700;font-size:13px}
+.jksrowS .mt{font-size:11.5px;color:var(--muted);margin-top:1px}
+.jksrowS .wr{font-size:11px;color:var(--or-ink);margin-top:2px;font-weight:600}
+.jksrowS .br{height:5px;border-radius:3px;background:var(--track);margin-top:5px;overflow:hidden}
+.jksrowS .br i{display:block;height:100%}
+.jksrowS .bg{margin-left:auto;text-align:right;font-weight:800;font-size:17px;line-height:1}
+.jksrowS .bg small{display:block;font-size:10.5px;font-weight:500;color:var(--muted);margin-top:3px}
+.jkspanel .jlg{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:11px;color:var(--muted)}
+.jkspanel .jlg i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px}
+.jkspanel .jnote{font-size:11.5px;color:var(--muted);line-height:1.5;background:var(--tint);border-radius:12px;padding:9px 11px}
+.jkspanel .jtop{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.jkspanel .jtut{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:3px 9px;font:700 12px var(--f-ui);cursor:pointer}
+@media (min-width:901px){#mapCard:has(#jksPanel:not([hidden])) #legend{max-width:calc(100% - 380px)}}
+@media (max-width:900px){.jkspanel{left:10px;right:10px;top:auto;bottom:10px;width:auto;max-height:42%;z-index:850}.jksbar{left:10px;top:66px;max-width:calc(100% - 70px)}}
 /* ===== v21 (30 Okt): header datar, cari, pantauan, tema, peta prioritas ===== */
 .top .tabs button{white-space:nowrap}
 @media (min-width:861px) and (max-width:1560px){ .chip-mode{display:none!important} }
@@ -1262,6 +1304,14 @@ body.fit-peta .subnav{display:none!important}
                 <label class="swt" title="ON = jalan yang sudah dilewati sales ditimpa warna teal"><input type="checkbox" id="ljejak"><i></i><b class="on">ON</b><b class="off">OFF</b></label></div>
               <div id="hintJalan" class="hintx"></div>
             </div>
+            <div id="grpJks" class="jksgrp col g4">
+              <div class="tgl-sw"><label class="tgl" style="flex:1"><input type="checkbox" id="ljks"><span>Petak searah JKS <b class="jksbaru">BARU</b></span></label></div>
+              <div class="hintx" style="color:var(--muted);margin-left:0">Petak tugas yang berisi toko JKS sales di hari terpilih. Isinya sama dengan tanda <b>JKS hari ini</b> di APK masing-masing sales.</div>
+              <div class="tgl-sw tgl-sub" style="margin-left:0"><span class="sub-t">Titik toko JKS hari itu</span>
+                <label class="swt" title="ON = titik toko JKS hari terpilih (merah = toko sedotan)"><input type="checkbox" id="ljksTitik" checked><i></i><b class="on">ON</b><b class="off">OFF</b></label></div>
+              <div class="tgl-sw tgl-sub" style="margin-left:0"><span class="sub-t">Toko JKS di petak sales lain</span>
+                <label class="swt" title="ON = kotak putus-putus untuk petak yang berisi toko JKS sales ini tapi dimiliki sales lain"><input type="checkbox" id="ljksLuar" checked><i></i><b class="on">ON</b><b class="off">OFF</b></label></div>
+            </div>
           </div>
           <div class="col g4"><span class="lbl">Saring toko</span>
             <label class="tgl fo-row"><input type="checkbox" class="fo" value="A" checked><i class="dot" style="background:var(--tA)"></i>Tier A · grosir / semi-grosir</label>
@@ -1288,6 +1338,11 @@ body.fit-peta .subnav{display:none!important}
         <div class="card mapcard" id="mapCard">
           <div id="map"></div>
           <div id="hint">Klik petak atau titik toko untuk detail</div>
+          <div id="jksBar" class="jksbar" hidden>
+            <div class="jksrow" id="jksHari" role="group" aria-label="Hari JKS"></div>
+            <div class="jksrow jkswk" id="jksMinggu" role="group" aria-label="Minggu"></div>
+          </div>
+          <aside class="card jkspanel" id="jksPanel" aria-live="polite" hidden></aside>
           <aside class="card petadetail kosong" id="petakPanel" aria-live="polite"></aside>
           <div id="manualDrawStatus">Lagi gambar area manual — lepas klik untuk selesai &amp; simpan.<a onclick="batalGambarManual()">Batal</a></div>
           <button class="btn btn-gh" id="btnDraw" type="button" aria-pressed="false"><span data-ico="draw"></span><span id="btnDrawT">Gambar area manual</span></button>
@@ -2890,6 +2945,7 @@ function perbarui(){
   susunUlang();
   var rinci = KATEGORI[MODE].map(function(c){ return '<span style="color:'+c.w+'">&#9632;</span> '+(rz.kat[c.k]||0).toLocaleString('id-ID'); }).join(' &nbsp;');
   isiRingkasPeta(rz, ro);
+  try{ if(typeof jksSegarkan === 'function') jksSegarkan({lembut:true}); }catch(e){ console.error('jks', e); }
 }
 
 var LAYER_MEMORY_KEYS = ['lz','lo','ltt','ls','lg','ljejak','ljalan'];
@@ -2918,6 +2974,7 @@ function setDefaultPeta(){
   function set(id, v){ var el = document.getElementById(id); if(el && !el.disabled) el.checked = v; }
   ['lz', 'lo', 'lassign'].forEach(function(id){ set(id, true); });
   ['la', 'lk', 'ltt', 'ls', 'lg', 'ljalan', 'ljejak'].forEach(function(id){ set(id, false); });
+  try{ if(typeof jksMatikan === 'function') jksMatikan(); }catch(e){}
   document.querySelectorAll('.fo').forEach(function(c){ c.checked = true; });
   var lat = document.getElementById('legAtap'); if(lat) lat.style.display = 'none';
   PILOT_ONLY = false; set('fPilot', false);
@@ -3121,6 +3178,7 @@ function autoAssignPilot(manualKeys){
   return out;
 }
 async function muatAssignedMap(){
+  if(typeof JKS !== 'undefined') JKS.manual = null;   // v31: penugasan manual berubah -> lapisan searah JKS ambil ulang
   if(!DEPOT){ assignedMap = {}; assignedKodeMap = {}; assignedKeysBySales = {}; return; }
   var qAssigned = sb.from('assign_pilot').select('key_petak, kode_salesman').eq('status','aktif');
   qAssigned = saringDepo(qAssigned, 'depot');
@@ -6056,7 +6114,7 @@ var TOUR_STEPS = [
   {b:'panel', v:'peta', pre:function(){ tutTab('saring'); }, s:'#secSaringZona', t:'Saring prioritas', d:'Klik chip A, B, C, atau Sepi untuk menyalakan atau mematikan petak prioritas itu; angkanya = jumlah petak. Centang "Hanya zona pilot" untuk melihat zona pilot saja. "Cara baca warna" membuka penjelasan lengkap.', a:['Klik chip', 'Centang', 'Klik Cara baca warna']},
   {b:'panel', v:'peta', pre:function(){ tutTab('saring'); }, s:function(){ var f = document.getElementById('fb'); return f && f.parentElement; }, t:'Batas minimal', d:'Bangunan minimal: petak dengan bangunan di bawah angka ini disembunyikan. Peluang ada grosir minimal: petak dengan peluang lebih rendah disembunyikan. Geser ke kanan = petak yang tampil makin sedikit dan makin padat.', a:['Geser slider']},
   {b:'panel', v:'peta', pre:function(){ tutTab('lapisan'); }, s:'#secPetaDasar', t:'Peta dasar', d:'Pilih latar peta: Terang, OSM, Satelit, Hybrid (Esri + label), atau Google Hybrid (dengan nama tempat). Satelit dan Hybrid membantu melihat atap dan jalan asli.', a:['Pilih']},
-  {b:'panel', v:'peta', pre:function(){ tutTab('lapisan'); }, s:function(){ var l = document.getElementById('lz'); return tutNaik(l, '.col'); }, t:'Lapisan tambahan', d:'Nyalakan atau matikan: Petak prediksi (sakelar ON = petak yang sudah ditugaskan diberi tanda ✓ hijau), Toko terdaftar beserta saring tier A/B/C/D, Atap bangunan, Batas kecamatan, Depo perbatasan, Hasil temuan NOO, dan Petak 4x4 (kotak biru = sudah disisir). Jalan Pacmann muncul kalau data jalan depo tersedia: sakelar ON = jalan yang sudah dilewati sales berwarna teal.', a:['Centang', 'Sakelar ON/OFF']},
+  {b:'panel', v:'peta', pre:function(){ tutTab('lapisan'); }, s:function(){ var l = document.getElementById('lz'); return tutNaik(l, '.col'); }, t:'Lapisan tambahan', d:'Nyalakan atau matikan: Petak prediksi (sakelar ON = petak yang sudah ditugaskan diberi tanda ✓ hijau), Toko terdaftar beserta saring tier A/B/C/D, Atap bangunan, Batas kecamatan, Depo perbatasan, Hasil temuan NOO, dan Petak 4x4 (kotak biru = sudah disisir). BARU: Petak searah JKS = petak tugas tiap sales yang berisi toko JKS-nya di hari terpilih (sama dengan tanda JKS hari ini di APK), pilih hari R01–R06 di atas peta. Jalan Pacmann muncul kalau data jalan depo tersedia: sakelar ON = jalan yang sudah dilewati sales berwarna teal.', a:['Centang', 'Sakelar ON/OFF']},
   {b:'panel', v:'peta', pre:function(){ tutTab('cari'); }, post:function(){ tutTab('saring'); }, s:'#ptab-cari', t:'Cari toko', d:'Ketik nama toko, kode outlet, atau nama sales. Pilih jenisnya: Toko existing, NOO berhasil, atau Belum berhasil (ditemui tapi belum jadi NOO). Klik satu baris untuk terbang ke toko itu di peta. Scroll ke bawah dan klik "Tampilkan 60 lagi" untuk memuat lebih banyak.', a:['Ketik', 'Klik baris', 'Scroll']},
 
   /* ---------- 4. Kartu petak ---------- */
@@ -6407,6 +6465,205 @@ document.addEventListener('keydown', function(e){
 })();
 
 
+
+/* ===================== v31: LAPISAN "PETAK SEARAH JKS" (Peta -> Lapisan) =====================
+   Definisi SAMA dengan APK dan Laporan harian:
+   - JKS hari itu = toko GDKDA (o[8]) berrute R0N (N = hari Senin..Sabtu) dengan siklus minggu itu (M1 tiap minggu; minggu ISO ganjil = M2C13, genap = M2C24).
+   - Petak searah = petak TUGAS sales yang berisi toko JKS-nya hari itu. Tugas = penugasan manual aktif (assign_pilot) + pemilik otomatis (lapPemilik: sales dengan toko terbanyak
+     di petak, seri -> omset, petak A/B tanpa toko -> sales JKS terdekat). Petak yang sudah dialihkan manual ke sales lain tidak ikut (sama dengan APK).
+   - Kotak putus-putus = petak berisi toko JKS sales itu, tapi tugasnya milik sales lain (tidak muncul di APK sales itu). */
+var JKS = {hari:1, minggu:0, sel:null, titik:true, luar:true, ringkas:false, rp:null, rt:null, G:null, manual:null, manualSig:'', cache:null, seq:0, dRef:null};
+var JKS_WARNA = ['#F472B6', '#3B82F6', '#06B6D4', '#8B5CF6', '#84CC16', '#F59E0B', '#14B8A6', '#EF4444', '#EC4899', '#10B981', '#6366F1', '#EAB308'];
+var JKS_NAMA_HARI = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+var JKS_BLN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+/* tanggal (WIB) hari JKS ke-h (1 = Senin) pada minggu ini (mg = 0) atau minggu depan (mg = 1). Kalau hari ini Minggu, "minggu ini" = minggu yang mulai besok. */
+function jksTgl(h, mg){
+  var t = hariIni().split('-').map(Number), dt = new Date(Date.UTC(t[0], t[1] - 1, t[2])), dow = dt.getUTCDay();
+  var sen = dt.getTime() + (dow === 0 ? 1 : 1 - dow) * 864e5;
+  return new Date(sen + ((h - 1) + 7 * mg) * 864e5).toISOString().slice(0, 10);
+}
+function jksRentang(mg){
+  var a = jksTgl(1, mg).split('-').map(Number), b = jksTgl(6, mg).split('-').map(Number);
+  return a[1] === b[1] ? (a[2] + '–' + b[2] + ' ' + JKS_BLN[a[1] - 1]) : (a[2] + ' ' + JKS_BLN[a[1] - 1] + '–' + b[2] + ' ' + JKS_BLN[b[1] - 1]);
+}
+function jksAktif(){ var c = document.getElementById('ljks'); return !!(c && c.checked && D); }
+function jksPane(){
+  if(!map.getPane('paneJksPetak')){
+    map.createPane('paneJksPetak'); map.getPane('paneJksPetak').style.zIndex = 444; map.getPane('paneJksPetak').style.pointerEvents = 'none';
+    map.createPane('paneJksTitik'); map.getPane('paneJksTitik').style.zIndex = 488;
+  }
+  if(!JKS.rp){ JKS.rp = L.canvas({pane:'paneJksPetak', padding:0.5}); JKS.rt = L.canvas({pane:'paneJksTitik', padding:0.5}); }
+}
+function jksBersihkan(){ if(JKS.G){ try{ map.removeLayer(JKS.G); }catch(e){} JKS.G = null; } }
+/* petak & tanda lain diredupkan selama lapisan ini menyala (dikembalikan saat dimatikan) */
+function jksRedup(on){ ['overlayPane', 'markerPane', 'paneOutletAsIs'].forEach(function(n){ var e = map.getPane(n); if(e) e.style.opacity = on ? (n === 'markerPane' ? '.4' : '.35') : ''; }); }
+async function jksManualMuat(){
+  var sig = String(DEPOT) + '|' + ((DEPO_MULTI || []).join(','));
+  if(JKS.manual && JKS.manualSig === sig) return;
+  var m = {};
+  try{
+    var rows = await ambilSemuaBaris(function(){ return saringDepo(sb.from('assign_pilot').select('key_petak,kode_salesman').eq('status', 'aktif'), 'depot'); });
+    rows.forEach(function(a){ (m[a.key_petak] = m[a.key_petak] || []).push(String(a.kode_salesman)); });
+  }catch(e){ console.error('jks assign', e); }
+  JKS.manual = m; JKS.manualSig = sig;
+}
+/* data per depo (APK menghitung pemilik petak per depo -> di view banyak depo dihitung per depo juga, bukan dari data gabungan) */
+async function jksSiapkan(){
+  if(JKS.cache && JKS.cache.d === D) return JKS.cache;
+  var dRef = D, units = [];
+  if(DEPOT === '__ALL__'){
+    var deps = lapDepos();
+    var data = await Promise.all(deps.map(function(dep){ return muatDataDepot(dep).catch(function(){ return null; }); }));
+    deps.forEach(function(dep, i){ if(data[i]) units.push({dep:dep, Dd:data[i]}); });
+  } else units.push({dep:DEPOT, Dd:D});
+  var ks = {};
+  units.forEach(function(u){
+    var zb = {}; u.Dd.zona.forEach(function(z){ zb[hitungKeyPetak(z[2], z[3])] = z; });
+    u.zb = zb; u.own = lapPemilik(u.Dd);
+    u.Dd.outlet.forEach(function(o){ if(o[8] && o[14]) ks[String(o[8])] = 1; });
+  });
+  var kodes = Object.keys(ks).sort(), warna = {};
+  kodes.forEach(function(kd, i){ warna[kd] = JKS_WARNA[i % JKS_WARNA.length]; });
+  JKS.cache = {d:dRef, units:units, warna:warna, adaJks:kodes.length > 0};
+  return JKS.cache;
+}
+function jksHitung(){
+  var C = JKS.cache, tgl = jksTgl(JKS.hari, JKS.minggu), jk = lapJks(tgl), per = {}, man = JKS.manual || {};
+  C.units.forEach(function(u){
+    var S = u.Dd.S || 0.01;
+    function milik(kd, k){ var mm = man[k]; if(mm && mm.indexOf(kd) >= 0) return true; if(mm && mm.length) return false; return u.own[k] === kd; }
+    u.Dd.outlet.forEach(function(o){
+      if(!o[8] || !o[14]) return;
+      if(!(o[14] === jk.rute && (o[15] === 'M1' || o[15] === jk.sik))) return;
+      var kd = String(o[8]), k = hitungKeyPetak(Math.floor(o[1] / S), Math.floor(o[0] / S));
+      var p = per[kd] || (per[kd] = {kode:kd, dep:u.dep, S:S, jml:0, sed:0, petak:{}, luar:{}, toko:[], warna:C.warna[kd]});
+      p.jml++; if(o[13] === 1 || o[13] === true) p.sed++;
+      p.toko.push(o);
+      var z = u.zb[k];
+      if(z){ if(milik(kd, k)) p.petak[k] = z; else p.luar[k] = z; }
+    });
+  });
+  var list = Object.keys(per).map(function(kd){ var p = per[kd]; p.nPetak = Object.keys(p.petak).length; p.nLuar = Object.keys(p.luar).length; return p; })
+    .sort(function(a, b){ return (b.nPetak - a.nPetak) || (a.kode < b.kode ? -1 : 1); });
+  var uniq = {}, nToko = 0, nSed = 0;
+  list.forEach(function(p){ Object.keys(p.petak).forEach(function(k){ uniq[p.dep + ':' + k] = 1; }); nToko += p.jml; nSed += p.sed; });
+  return {tgl:tgl, jk:jk, list:list, nPetak:Object.keys(uniq).length, nToko:nToko, nSed:nSed, nSales:list.length, nSalesPetak:list.filter(function(p){ return p.nPetak > 0; }).length};
+}
+function jksGambar(H){
+  jksBersihkan(); jksPane();
+  var grp = [];
+  H.list.forEach(function(p){
+    var dim = JKS.sel && JKS.sel !== p.kode, S = p.S;
+    Object.keys(p.petak).forEach(function(k){
+      var z = p.petak[k], lat0 = z[3] * S, lon0 = z[2] * S;
+      grp.push(L.rectangle([[lat0, lon0], [lat0 + S, lon0 + S]], {renderer:JKS.rp, interactive:false, color:p.warna, weight:dim ? 1 : 2.5, opacity:dim ? .35 : 1, fillColor:p.warna, fillOpacity:dim ? .1 : .5}));
+    });
+    if(JKS.luar) Object.keys(p.luar).forEach(function(k){
+      var z = p.luar[k], lat0 = z[3] * S, lon0 = z[2] * S;
+      grp.push(L.rectangle([[lat0, lon0], [lat0 + S, lon0 + S]], {renderer:JKS.rp, interactive:false, color:p.warna, weight:2.5, opacity:dim ? .3 : 1, dashArray:'6 5', fill:false}));
+    });
+  });
+  if(JKS.titik) H.list.forEach(function(p){
+    if(JKS.sel && JKS.sel !== p.kode) return;
+    p.toko.forEach(function(o){
+      var sed = o[13] === 1 || o[13] === true;
+      var c = L.circleMarker([o[0], o[1]], {renderer:JKS.rt, radius:sed ? 6 : 4.2, color:sed ? '#FF4D4D' : p.warna, weight:sed ? 3 : 2, fillColor:sed ? '#1C212D' : '#FFFFFF', fillOpacity:1});
+      pasangHoverKlik(c, (o[7] || 'Toko') + ' · ' + (sed ? 'toko sedotan · ' : '') + 'JKS ' + H.jk.rute + ' ' + H.jk.sik, htmlOutletPopup(o), null, null);
+      grp.push(c);
+    });
+  });
+  JKS.G = L.layerGroup(grp).addTo(map);
+}
+function jksFit(H){
+  var bs = [];
+  H.list.forEach(function(p){
+    if(JKS.sel && JKS.sel !== p.kode) return;
+    var S = p.S;
+    Object.keys(p.petak).forEach(function(k){ var z = p.petak[k]; bs.push([z[3] * S, z[2] * S], [z[3] * S + S, z[2] * S + S]); });
+  });
+  if(bs.length) map.fitBounds(bs, {padding:[60, 60], maxZoom:16});
+}
+function jksRenderBar(){
+  var hr = hariIni(), h = '<span class="tt">Hari JKS</span>';
+  for(var i = 1; i <= 6; i++){
+    var t = jksTgl(i, JKS.minggu), on = i === JKS.hari;
+    h += '<button type="button" class="jkschip' + (on ? ' on' : '') + '" data-h="' + i + '" aria-pressed="' + on + '">R0' + i + ' <small>' + JKS_NAMA_HARI[i - 1] + '</small>' + (t === hr ? '<span class="hi">HARI INI</span>' : '') + '</button>';
+  }
+  document.getElementById('jksHari').innerHTML = h;
+  var w = '';
+  [0, 1].forEach(function(m){
+    var on = m === JKS.minggu, jk = lapJks(jksTgl(1, m));
+    w += '<button type="button" class="jkschip' + (on ? ' on' : '') + '" data-w="' + m + '" aria-pressed="' + on + '">' + (m ? 'Minggu depan' : 'Minggu ini') + ' · ' + jksRentang(m) + ' · ' + jk.sik + '</button>';
+  });
+  document.getElementById('jksMinggu').innerHTML = w;
+}
+function jksRenderPanel(H){
+  var P = document.getElementById('jksPanel'), C = JKS.cache;
+  if(!C.adaJks){
+    P.innerHTML = '<div class="jh1">Petak searah JKS</div><div class="jnote">Depo ini belum punya data rute JKS di dashboard, jadi belum ada petak searah yang bisa ditampilkan.</div>';
+    return;
+  }
+  var hari = (H.tgl === hariIni()) ? ' <span class="jksbaru" style="margin-left:4px">HARI INI</span>' : '';
+  var maks = Math.max.apply(null, H.list.map(function(p){ return p.nPetak; }).concat([1]));
+  var h = '<div class="jtop"><div><div class="muted" style="font-size:12px;font-weight:600">Searah JKS · ' + H.jk.rute + ' ' + H.jk.sik + '</div><div class="jh1">' + esc(lapNamaHari(H.tgl)) + hari + '</div></div>' +
+    '<button type="button" class="jtut" id="jksRingkas" aria-expanded="' + (!JKS.ringkas) + '" title="Ringkas / lebarkan panel">' + (JKS.ringkas ? '▴' : '▾') + '</button></div>';
+  h += '<div class="jkp"><div class="or"><span>Petak searah JKS</span><b>' + fmt(H.nPetak) + '</b></div><div><span>Toko JKS hari itu</span><b>' + fmt(H.nToko) + '</b></div>' +
+    '<div><span>Toko sedotan</span><b style="color:var(--red)">' + fmt(H.nSed) + '</b></div><div><span>Sales punya rute</span><b>' + H.nSalesPetak + '/' + H.nSales + '</b></div></div>';
+  if(!JKS.ringkas){
+    if(!H.list.length){
+      h += '<div class="jnote">Tidak ada toko JKS berrute ' + H.jk.rute + ' siklus ' + H.jk.sik + ' di depo ini. Coba hari lain di bar atas peta.</div>';
+    }else{
+      h += '<div class="lbl" style="margin-top:2px">Per sales · klik untuk sorot</div><div class="col" style="gap:2px">';
+      H.list.forEach(function(p){
+        var sel = JKS.sel === p.kode, dim = JKS.sel && !sel;
+        h += '<button type="button" class="jksrowS' + (sel ? ' sel' : '') + (dim ? ' dim' : '') + '" data-k="' + esc(p.kode) + '" aria-pressed="' + sel + '"><i class="sw" style="background:' + p.warna + '"></i>' +
+          '<span style="flex:1;min-width:0"><span class="nm" style="display:block">' + esc(namaSalesDari(p.kode)) + '</span><span class="mt" style="display:block">' + p.jml + ' toko JKS · ' + p.sed + ' sedotan</span>' +
+          (p.nLuar ? '<span class="wr" style="display:block">+' + p.nLuar + ' petak di luar tugasnya</span>' : '') +
+          '<span class="br" style="display:block"><i style="width:' + Math.round(p.nPetak / maks * 100) + '%;background:' + p.warna + '"></i></span></span>' +
+          '<span class="bg">' + p.nPetak + '<small>petak</small></span></button>';
+      });
+      h += '</div>';
+    }
+    h += '<div class="jlg"><span><i style="background:rgba(59,130,246,.5);box-shadow:inset 0 0 0 2px #3B82F6"></i>Petak searah (warna = sales)</span><span><i style="border:2px dashed #3B82F6"></i>Toko JKS di petak sales lain</span>' +
+      '<span><i style="background:#fff;border:2px solid #3B82F6;border-radius:50%;width:9px;height:9px"></i>Toko JKS</span><span><i style="background:#1C212D;border:2px solid #FF4D4D;border-radius:50%;width:9px;height:9px"></i>Toko sedotan</span></div>';
+    h += '<div class="jnote"><b>Cara baca.</b> Petak berwarna = petak tugas sales yang berisi toko JKS-nya di hari terpilih (sama dengan tanda <b>JKS hari ini</b> di APK). Kotak putus-putus = toko JKS-nya ada di petak milik sales lain, jadi tidak muncul di APK-nya. Siklus: minggu ISO ganjil = M2C13, genap = M2C24, M1 tiap minggu.</div>';
+  }
+  P.innerHTML = h;
+}
+async function jksSegarkan(opt){
+  opt = opt || {};
+  var bar = document.getElementById('jksBar'), pn = document.getElementById('jksPanel');
+  if(!bar || !pn) return;
+  if(!jksAktif()){ jksBersihkan(); jksRedup(false); bar.hidden = true; pn.hidden = true; return; }
+  if(opt.lembut && JKS.cache && JKS.cache.d === D && JKS.manual && JKS.G) return;   // perbarui() biasa (slider dsb.): tidak perlu hitung ulang
+  var seq = ++JKS.seq;
+  if(JKS.dRef !== D){ JKS.dRef = D; JKS.sel = null; opt.fit = true; }
+  bar.hidden = false; pn.hidden = false; jksRedup(true);
+  await jksManualMuat();
+  await jksSiapkan();
+  if(seq !== JKS.seq || !jksAktif()) return;
+  var H = jksHitung();
+  jksRenderBar(); jksRenderPanel(H); jksGambar(H);
+  if(opt.fit) jksFit(H);
+}
+function jksMatikan(){ var c = document.getElementById('ljks'); if(c) c.checked = false; JKS.sel = null; jksSegarkan(); }
+(function(){
+  var c = document.getElementById('ljks'); if(!c) return;
+  var dw = new Date(hariIni() + 'T00:00:00Z').getUTCDay(); JKS.hari = (dw >= 1 && dw <= 6) ? dw : 1;
+  c.addEventListener('change', function(){ JKS.sel = null; jksSegarkan({fit:true}); });
+  document.getElementById('ljksTitik').addEventListener('change', function(){ JKS.titik = this.checked; jksSegarkan(); });
+  document.getElementById('ljksLuar').addEventListener('change', function(){ JKS.luar = this.checked; jksSegarkan(); });
+  document.getElementById('jksBar').addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('button') : null; if(!b) return;
+    if(b.dataset.h){ JKS.hari = +b.dataset.h; JKS.sel = null; jksSegarkan({fit:true}); }
+    else if(b.dataset.w){ JKS.minggu = +b.dataset.w; JKS.sel = null; jksSegarkan({fit:true}); }
+  });
+  document.getElementById('jksPanel').addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('button') : null; if(!b) return;
+    if(b.id === 'jksRingkas'){ JKS.ringkas = !JKS.ringkas; jksSegarkan(); return; }
+    if(b.dataset.k){ JKS.sel = (JKS.sel === b.dataset.k) ? null : b.dataset.k; jksSegarkan({fit:true}); }
+  });
+})();
 
 function lapIkon(r){ (r || document).querySelectorAll('[data-ico]').forEach(function(e){ e.innerHTML = ico(e.dataset.ico); e.style.display = 'inline-flex'; }); }
 /* ===================== v30: LAPORAN HARIAN DEPO (gambar untuk WA) =====================
