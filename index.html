@@ -4437,10 +4437,32 @@ function masukSandboxUI(){
 /* ---------- refresh terjadwal ---------- */
 var _rf = null;
 function uiRefreshSoon(){ clearTimeout(_rf); _rf = setTimeout(uiRefreshNow, 120); }
+/* v32: "Aktivitas terakhir" ikut membaca jejak GPS terbaru per sales (sebelumnya hanya temuan/kotak -> sales yang baru GPS-nya jalan tampak "2 hari lalu") */
+var JEJAK_LAST = {}, JEJAK_LAST_T = 0, JEJAK_LAST_BUSY = false;
+async function muatJejakTerakhir(){
+  if(JEJAK_LAST_BUSY || !SB_SIAP || Date.now() - JEJAK_LAST_T < 45000) return;
+  var L = (SALES_LIST || []).map(function(s){ return String(s[0]); }).filter(function(k, i, a){ return k && a.indexOf(k) === i && !/^(RBM|BM|ASS|TESTER)/i.test(k); }).slice(0, 80);
+  if(!L.length) return;
+  JEJAK_LAST_BUSY = true; var berubah = false;
+  try{
+    for(var i = 0; i < L.length; i += 10){
+      await Promise.all(L.slice(i, i + 10).map(async function(k){
+        try{
+          var r = await sb.from('jejak_lokasi').select('waktu').eq('kode_salesman', k).order('waktu', {ascending:false}).limit(1);
+          var w = (r.data && r.data[0]) ? r.data[0].waktu : null;
+          if(w && w !== JEJAK_LAST[k]){ JEJAK_LAST[k] = w; berubah = true; }
+        }catch(e){}
+      }));
+    }
+    JEJAK_LAST_T = Date.now();
+  }finally{ JEJAK_LAST_BUSY = false; }
+  if(berubah) uiRefreshSoon();
+}
 function uiRefreshNow(){
   clearTimeout(_rf);
   if(!D && !DEPOT) return;
   MODEL = null;
+  setTimeout(function(){ muatJejakTerakhir().catch(function(){}); }, 0);
   try{ renderPulse(); }catch(e){ console.error('pulse', e); }
   try{
     if(VIEW === 'ringkasan') renderRingkasan();
@@ -4590,6 +4612,7 @@ function hitungModel(){
     var aktif = petak.filter(function(p){ return p.kodes.indexOf(kode) >= 0 && p.status !== 'selesai'; }).length;
     var tm = temSales[kode] || {n:0, noo:0, last:null};
     var lastAct = lastSales[kode] || null; if(tm.last && (!lastAct || tm.last > lastAct)) lastAct = tm.last;
+    var jj = JEJAK_LAST[kode]; if(jj && (!lastAct || jj > lastAct)) lastAct = jj;   // jejak GPS terbaru
     var jL = 0, jC = 0, kD = 0, kM = 0;
     petak.forEach(function(p){ if(p.kodes.indexOf(kode) < 0) return; jL += p.jL; jC += p.jL * p.jP; kD += p.done; kM += p.max; });
     return {jL:jL, jC:jC, kD:kD, kM:kM, kode:kode, nama:s[1], petak:ks.length, aktif:aktif, kotak:kotakSales[kode] || 0, kotakHari:kotakHari[kode] || 0, tm:tm.n, noo:tm.noo, last:lastAct};
@@ -6694,7 +6717,16 @@ function lapJks(hari){
   var p = hari.split('-').map(Number), dow = new Date(Date.UTC(p[0], p[1] - 1, p[2])).getUTCDay();
   return {dow:dow, rute:'R0' + dow, sik:lapIsoWeek(p[0], p[1] - 1, p[2]) % 2 === 1 ? 'M2C13' : 'M2C24'};
 }
+function lapRentang(key){ var a = String(key).split('~'); return {a:a[0], b:a[1] || a[0], rentang:a.length > 1 && a[1] !== a[0]}; }
+function lapHariKerja(a, b){ var o = []; for(var d = a, n = 0; d <= b && n < 400; d = tambahHari(d, 1), n++){ if(new Date(d + 'T00:00:00Z').getUTCDay() !== 0) o.push(d); } return o; }
 function lapNamaHari(hari){
+  var rg = lapRentang(hari);
+  if(rg.rentang){
+    var A = rg.a.split('-').map(Number), B = rg.b.split('-').map(Number), fa = new Date(Date.UTC(A[0], A[1] - 1, A[2])), fb = new Date(Date.UTC(B[0], B[1] - 1, B[2]));
+    var o1 = {day:'numeric', timeZone:'UTC'}, o2 = {day:'numeric', month:'short', year:'numeric', timeZone:'UTC'};
+    var t1 = (A[0] === B[0] && A[1] === B[1]) ? fa.toLocaleDateString('id-ID', o1) : fa.toLocaleDateString('id-ID', {day:'numeric', month:'short', timeZone:'UTC'});
+    return t1 + ' – ' + fb.toLocaleDateString('id-ID', o2) + ' (' + lapHariKerja(rg.a, rg.b).length + ' hari kerja)';
+  }
   var p = hari.split('-').map(Number);
   return new Date(Date.UTC(p[0], p[1] - 1, p[2])).toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'short', year:'numeric', timeZone:'UTC'});
 }
@@ -6829,6 +6861,58 @@ async function lapHitungDepo(dep, hari, bahan, pakaiJalan){
   R.skor = lapSkor(R);
   return R;
 }
+/* ---------- v32: rentang tanggal (akumulasi harian, MTD, dst.) ----------
+   Setiap hari kerja (Sen–Sab) dihitung dengan aturan harian yang sama, lalu dijumlahkan: target = jumlah target harian, realisasi = jumlah realisasi harian. */
+async function lapBahanRentang(depos, hari, hari2, prog, mentah){
+  var days = lapHariKerja(hari, hari2), a = wibAwal(hari), b = wibAwal(tambahHari(hari2, 1)), satu = depos.length === 1;
+  function sar(q){ return satu ? q.eq('depot', depos[0]) : q.in('depot', depos); }
+  var aggDay = null, jejakAll = [];
+  if(!mentah){
+    aggDay = {};
+    for(var i = 0; i < days.length && aggDay; i += 4){
+      prog('Mengambil jejak GPS ' + Math.min(i + 4, days.length) + '/' + days.length + ' hari…');
+      var got = await Promise.all(days.slice(i, i + 4).map(function(d){
+        return sb.rpc('laporan_kunjungan', {p_dari:wibAwal(d), p_sampai:wibAwal(tambahHari(d, 1)), p_depot:depos}).then(function(r){ return {d:d, r:r}; }).catch(function(){ return {d:d, r:{error:true}}; });
+      }));
+      got.forEach(function(g){ if(g.r.error || !Array.isArray(g.r.data)) aggDay = null; else if(aggDay) aggDay[g.d] = g.r.data; });
+    }
+  }
+  if(!aggDay){
+    prog('Mengambil jejak GPS (rinci)…');
+    jejakAll = await ambilSemuaBaris(function(){ return sar(sb.from('jejak_lokasi').select('kode_salesman,lat,lon,waktu,akurasi,depot')).gte('waktu', a).lt('waktu', b).order('waktu', {ascending:true}); });
+  }
+  prog('Mengambil temuan…');
+  var temuan = await ambilSemuaBaris(function(){ return sar(sb.from('temuan_pilot').select('id,kode_salesman,status_tindak_lanjut,alasan_tidak_tertarik,jadwal_kunjung_lagi,foto_url,lat,lon,nama_toko,ukuran_toko,nominal_order,tanggal,key_petak,depot')).gte('tanggal', a).lt('tanggal', b).order('tanggal', {ascending:false}); });
+  prog('Mengambil penugasan…');
+  var assign = await ambilSemuaBaris(function(){ return sar(sb.from('assign_pilot').select('key_petak,kode_salesman,depot')).eq('status', 'aktif'); });
+  var per = {};
+  days.forEach(function(d){
+    per[d] = {};
+    depos.forEach(function(dp){ per[d][dp] = {jejak:[], temuan:[], assign:assign.filter(function(r){ return r.depot === dp; }), agg:aggDay ? {} : null}; });
+  });
+  if(aggDay) days.forEach(function(d){ (aggDay[d] || []).forEach(function(r){ if(per[d][r.depot]) per[d][r.depot].agg[String(r.kode_salesman)] = r; }); });
+  else jejakAll.forEach(function(r){ var d = wibHari(r.waktu); if(per[d] && per[d][r.depot]) per[d][r.depot].jejak.push(r); });
+  temuan.forEach(function(r){ var d = wibHari(r.tanggal); if(per[d] && per[d][r.depot]) per[d][r.depot].temuan.push(r); });
+  return {days:days, per:per};
+}
+function lapAgregat(Rs, key){
+  var f = Rs[0], tambah = ['target', 'disisir', 'titik', 'kmT', 'kmR', 'kmAll', 'nooT', 'noo', 'gagal', 'order', 'nOrder', 'foto', 'temuan'], bs = {}, urut = [], alasan = {}, contoh = [], semuaFoto = [];
+  Rs.forEach(function(R){
+    R.baris.forEach(function(b){
+      var x = bs[b.kode];
+      if(!x){ x = bs[b.kode] = {kode:b.kode, nama:b.nama, gps:false, jam:'', hariAktif:0}; tambah.forEach(function(k){ x[k] = 0; }); urut.push(x); }
+      tambah.forEach(function(k){ x[k] += b[k] || 0; });
+      if(b.gps){ x.gps = true; x.hariAktif++; }
+    });
+    Object.keys(R.alasan).forEach(function(k){ alasan[k] = (alasan[k] || 0) + R.alasan[k]; });
+    contoh = contoh.concat(R.contoh); semuaFoto = semuaFoto.concat(R.semuaFoto);
+  });
+  var sum = function(k){ return Rs.reduce(function(a, R){ return a + R[k]; }, 0); };
+  var R = {dep:f.dep, region:f.region, hari:key, jks:null, nHari:Rs.length, baris:urut, alasan:alasan, contoh:contoh, semuaFoto:semuaFoto, pakaiJalan:Rs.some(function(r){ return r.pakaiJalan; })};
+  ['petakT', 'petakR', 'kmT', 'kmR', 'nooT', 'noo', 'gagal', 'order', 'nOrder', 'aktif', 'nSales'].forEach(function(k){ R[k] = sum(k); });
+  R.skor = lapSkor(R);
+  return R;
+}
 function lapPct(r, t){ return t > 0 ? Math.min(100, Math.round(r / t * 100)) : null; }
 function lapSkor(R){
   var a = [lapPct(R.petakR, R.petakT), R.pakaiJalan ? lapPct(R.kmR, R.kmT) : null, lapPct(R.noo, R.nooT), lapPct(R.aktif, R.nSales)].filter(function(x){ return x != null; });
@@ -6872,13 +6956,13 @@ function lapMuatFoto(url){
     }).catch(function(){ res(null); });
   });
 }
-function lapKepala(ctx, W, judul, meta, skor, kanan){
+function lapKepala(ctx, W, judul, meta, skor, kanan, per){
   ctx.fillStyle = '#1F2C4F'; ctx.fillRect(0, 0, W, 196);
-  ctx.fillStyle = 'rgba(255,255,255,.85)'; lapFont(ctx, '800', 20); ctx.fillText('SKYLENS 2.0 · LAPORAN HARIAN', 40, 50);
+  ctx.fillStyle = 'rgba(255,255,255,.85)'; lapFont(ctx, '800', 20); ctx.fillText('SKYLENS 2.0 · LAPORAN ' + (per ? 'PERIODE' : 'HARIAN'), 40, 50);
   ctx.textAlign = 'right'; ctx.fillText(kanan, W - 40, 50); ctx.textAlign = 'left';
   ctx.fillStyle = '#FFFFFF'; lapFont(ctx, '800', 46); ctx.fillText(lapPotong(ctx, judul, W - 330), 40, 110);
   ctx.fillStyle = 'rgba(255,255,255,.85)'; lapFont(ctx, '500', 22); ctx.fillText(lapPotong(ctx, meta, W - 330), 40, 150);
-  ctx.textAlign = 'right'; lapFont(ctx, '600', 20); ctx.fillText('Skor hari ini', W - 40, 112);
+  ctx.textAlign = 'right'; lapFont(ctx, '600', 20); ctx.fillText(per ? 'Skor periode' : 'Skor hari ini', W - 40, 112);
   ctx.fillStyle = '#FFB27A'; lapFont(ctx, '800', 52); ctx.fillText(skor + '%', W - 40, 166); ctx.textAlign = 'left';
 }
 function lapBar(ctx, x, y, w, p, warna){
@@ -6892,13 +6976,13 @@ function lapTabelIndikator(ctx, W, y, R){
   ctx.fillText('INDIKATOR', X + 20, y + 31); ctx.textAlign = 'right'; ctx.fillText('TARGET', cT, y + 31); ctx.fillText('REALISASI', cR, y + 31); ctx.fillText('%', cP, y + 31); ctx.textAlign = 'left';
   y += 48;
   var rows = [
-    ['Petak searah JKS disisir', 'petak tugas berisi toko JKS ' + R.jks.rute + ' ' + R.jks.sik + ' · ada jejak GPS', R.petakT, R.petakR, lapPct(R.petakR, R.petakT), String],
+    ['Petak searah JKS disisir', R.jks ? 'petak tugas berisi toko JKS ' + R.jks.rute + ' ' + R.jks.sik + ' · ada jejak GPS' : 'jumlah petak searah JKS per hari kerja · ada jejak GPS', R.petakT, R.petakR, lapPct(R.petakR, R.petakT), String],
   ];
   if(R.pakaiJalan) rows.push(['Jalan besar dilewati', 'km jalan besar di petak searah JKS', R.kmT, R.kmR, lapPct(R.kmR, R.kmT), lapKm]);
-  rows.push(['Toko berhasil NOO', 'NOO sah (foto + GPS) · target harian APK', R.nooT, R.noo, lapPct(R.noo, R.nooT), String]);
+  rows.push(['Toko berhasil NOO', R.jks ? 'NOO sah (foto + GPS) · target harian APK' : 'NOO sah (foto + GPS) · jumlah target harian APK', R.nooT, R.noo, lapPct(R.noo, R.nooT), String]);
   rows.push(['Toko belum berhasil NOO', 'tidak tertarik + nanti dikunjungi', null, R.gagal, null, String]);
   rows.push(['Nominal orderan NOO', R.nOrder + ' toko mengisi nominal orderan', null, R.order, null, lapRp, true]);
-  rows.push(['Sales aktif (GPS terkirim)', 'sales GDKDA terdaftar', R.nSales, R.aktif, lapPct(R.aktif, R.nSales), String]);
+  rows.push([R.jks ? 'Sales aktif (GPS terkirim)' : 'Sales-hari aktif (GPS terkirim)', R.jks ? 'sales GDKDA terdaftar' : 'sales GDKDA × hari kerja', R.nSales, R.aktif, lapPct(R.aktif, R.nSales), String]);
   rows.forEach(function(r){
     var h = 84;
     if(r[6]){ ctx.fillStyle = '#FFF0E4'; ctx.fillRect(X, y, w, h); }
@@ -6966,7 +7050,7 @@ async function lapGambarDepo(R, fotoPilih){
   var ctx = cv.getContext('2d');
   ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, W, H);
   var bm = lapNamaBM(R.dep);
-  lapKepala(ctx, W, 'Depo ' + judulDepo(R.dep), lapNamaHari(R.hari) + ' · data s/d ' + lapJamData(R.hari) + ' WIB' + (bm ? ' · BM ' + bm : ''), R.skor, (R.region === 'R08' ? 'R08 JABAR SELATAN' : (R.region === 'R13' ? 'R13 JATIM SELATAN' : R.region)));
+  lapKepala(ctx, W, 'Depo ' + judulDepo(R.dep), lapNamaHari(R.hari) + ' · data s/d ' + lapJamData(R.hari) + ' WIB' + (bm ? ' · BM ' + bm : ''), R.skor, (R.region === 'R08' ? 'R08 JABAR SELATAN' : (R.region === 'R13' ? 'R13 JATIM SELATAN' : R.region)), lapRentang(R.hari).rentang);
   var y = lapTabelIndikator(ctx, W, 226, R);
   y = lapChips(ctx, W, y, R.alasan);
   y = lapTabelSales(ctx, W, y + 10, R);
@@ -7000,7 +7084,7 @@ function lapKaki(ctx, W, H){
   ctx.textAlign = 'right'; ctx.fillText('digitalizationpma.github.io/SkyLens-2.0', W - 40, H - 21); ctx.textAlign = 'left';
 }
 function judulDepo(d){ return String(d).toLowerCase().replace(/\b\w/g, function(c){ return c.toUpperCase(); }); }
-function lapJamData(hari){ return hari === hariIni() ? wibJam(Date.now()) : '23.59'; }
+function lapJamData(hari){ return lapRentang(hari).b === hariIni() ? wibJam(Date.now()) : '23.59'; }
 function lapGabung(L){
   var t = {petakT:0, petakR:0, kmT:0, kmR:0, nooT:0, noo:0, gagal:0, order:0, nOrder:0, aktif:0, nSales:0, pakaiJalan:L.some(function(r){ return r.pakaiJalan; })};
   L.forEach(function(r){ ['petakT', 'petakR', 'kmT', 'kmR', 'nooT', 'noo', 'gagal', 'order', 'nOrder', 'aktif', 'nSales'].forEach(function(k){ t[k] += r[k]; }); });
@@ -7014,7 +7098,7 @@ function lapGambarRekap(list, hari, label){
   var H = 196 + 40 + 200 + regs.reduce(function(a, g){ return a + 70 + 46 + (reg[g].length + 1) * 52 + 56; }, 0) + 130;
   var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   var ctx = cv.getContext('2d'); ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, W, H);
-  lapKepala(ctx, W, label, lapNamaHari(hari) + ' · ' + list.length + ' depo · data s/d ' + lapJamData(hari) + ' WIB', tot.skor, regs.join(' + '));
+  lapKepala(ctx, W, label, lapNamaHari(hari) + ' · ' + list.length + ' depo · data s/d ' + lapJamData(hari) + ' WIB', tot.skor, regs.join(' + '), lapRentang(hari).rentang);
   // kartu KPI total
   var y = 226, kp = [['Petak searah disisir', tot.petakR + '/' + tot.petakT, lapPct(tot.petakR, tot.petakT)], ['NOO sah', tot.noo + '/' + tot.nooT, lapPct(tot.noo, tot.nooT)],
     ['Nominal orderan', lapRp(tot.order), null, true], ['Sales aktif', tot.aktif + '/' + tot.nSales, lapPct(tot.aktif, tot.nSales)]];
@@ -7058,7 +7142,7 @@ function lapGambarRekap(list, hari, label){
     y += 56;
   });
   ctx.fillStyle = '#5E6678'; lapFont(ctx, '500', 16);
-  ctx.fillText('Petak = petak searah JKS hari ini yang didatangi (jejak GPS). NOO = NOO sah / target harian APK. Skor = rata-rata % indikator.', 40, H - 80);
+  ctx.fillText('Petak = petak searah JKS ' + (lapRentang(hari).rentang ? '(dijumlah per hari kerja)' : 'hari ini') + ' yang didatangi (jejak GPS). NOO = NOO sah / target harian APK. Skor = rata-rata % indikator.', 40, H - 80);
   lapKaki(ctx, W, H);
   return cv;
 }
@@ -7079,7 +7163,9 @@ function lapTeks(list, hari, label){
 }
 /* ---------- modal ---------- */
 function lapModalHtml(){
-  var depos = lapDepos(), multi = depos.length > 1, h = LAP.hari || hariIni(), kemarin = tambahHari(hariIni(), -1);
+  var depos = lapDepos(), multi = depos.length > 1, h = LAP.hari || hariIni(), h2 = LAP.hari2 || null, kemarin = tambahHari(hariIni(), -1), key = h2 ? h + '~' + h2 : h;
+  var tujuh = tambahHari(hariIni(), -6) + '~' + hariIni(), mtd = hariIni().slice(0, 8) + '01~' + hariIni();
+  if(mtd.split('~')[0] === hariIni()) mtd = hariIni();
   var segB = function(v, t, on, attr){ return '<button type="button" ' + attr + '="' + v + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + t + '</button>'; };
   var mode = multi ? LAP.mode : 'depo';
   var foto = LAP.kandidat.slice(0, 8).map(function(t, i){
@@ -7087,8 +7173,10 @@ function lapModalHtml(){
     return '<button type="button" class="lapf' + (on ? ' on' : '') + '" data-lapf="' + i + '" title="' + esc(t.nama_toko || '') + '"><img loading="lazy" alt="" src="' + esc(t.foto_url) + '"><i></i><b>' + esc((t.ukuran_toko || '?') + ' · ' + (t.nama_toko || 'Tanpa nama')) + '</b></button>';
   }).join('');
   return '<div class="row sp"><h3 style="margin:0">' + (multi ? 'Laporan harian' : 'Laporan harian depo') + '</h3><button class="icon-btn" style="width:34px;height:34px" type="button" data-laptutup="1" aria-label="Tutup">' + ico('x', 'width:16px;height:16px') + '</button></div>' +
-    '<div class="lapl">Tanggal</div><div class="seg sm wrap" style="flex-wrap:wrap">' + segB(hariIni(), 'Hari ini · ' + lapNamaHari(hariIni()).split(',')[0], h === hariIni(), 'data-laph') + segB(kemarin, 'Kemarin', h === kemarin, 'data-laph') +
-      '<label class="lapdate">Pilih <input type="date" id="lapTgl" value="' + h + '" max="' + hariIni() + '"></label></div>' +
+    '<div class="lapl">Periode</div><div class="seg sm wrap" style="flex-wrap:wrap">' + segB(hariIni(), 'Hari ini · ' + lapNamaHari(hariIni()).split(',')[0], key === hariIni(), 'data-laph') + segB(kemarin, 'Kemarin', key === kemarin, 'data-laph') +
+      segB(tujuh, '7 hari terakhir', key === tujuh, 'data-laph') + segB(mtd, 'Bulan ini (MTD)', key === mtd, 'data-laph') + '</div>' +
+    '<div class="row g8 wrap" style="margin-top:8px"><label class="lapdate">Dari <input type="date" id="lapTgl" value="' + h + '" max="' + hariIni() + '"></label><label class="lapdate">Sampai <input type="date" id="lapTgl2" value="' + (h2 || h) + '" max="' + hariIni() + '"></label></div>' +
+    (h2 ? '<div class="muted" style="font-size:12px;margin-top:6px">Rentang dihitung per hari kerja (Senin–Sabtu) lalu dijumlahkan. Maksimal 31 hari.</div>' : '') +
     '<div class="lapl">Cakupan</div><div class="seg sm" style="flex-wrap:wrap">' +
       (multi ? segB('rekap', 'Rekap ' + depos.length + ' depo · 1 gambar', mode === 'rekap', 'data-lapm') + segB('perdepo', '1 gambar per depo', mode === 'perdepo', 'data-lapm')
              : segB('depo', 'Depo ini (' + judulDepo(depos[0] || '-') + ')', true, 'data-lapm')) + '</div>' +
@@ -7112,20 +7200,38 @@ function lapBuka(){
 }
 function lapTutup(){ document.getElementById('modalLap').classList.remove('show'); LAP_SEQ++; }
 async function lapSiapkan(){
-  var seq = ++LAP_SEQ, depos = lapDepos(), hari = LAP.hari, st = function(t){ var e = document.getElementById('lapStatus'); if(e && seq === LAP_SEQ) e.textContent = t; };
+  var seq = ++LAP_SEQ, depos = lapDepos(), hari = LAP.hari, hari2 = LAP.hari2 || null, key = hari2 ? hari + '~' + hari2 : hari, st = function(t){ var e = document.getElementById('lapStatus'); if(e && seq === LAP_SEQ) e.textContent = t; };
   LAP_HASIL = null; lapTombol(false);
   var pv = document.getElementById('lapPrev'); if(pv) pv.innerHTML = '<span class="muted" id="lapStatus">Menyiapkan…</span>';
   try{
-    var bahan = await lapBahan(depos, hari, st, LAP.jalan);
-    if(seq !== LAP_SEQ) return;
     var list = [];
-    for(var i = 0; i < depos.length; i++){
-      st('Menghitung ' + (depos.length > 1 ? (i + 1) + '/' + depos.length + ' · ' : '') + judulDepo(depos[i]) + (LAP.jalan ? ' (jalan besar)…' : '…'));
-      await new Promise(function(r){ setTimeout(r, 0); });
-      list.push(await lapHitungDepo(depos[i], hari, bahan[depos[i]], LAP.jalan));
+    if(hari2){
+      var nh = lapHariKerja(hari, hari2).length;
+      if(!nh){ st('Rentang ini hanya berisi hari Minggu. Pilih rentang lain.'); return; }
+      if(LAP.jalan && nh * depos.length > 24){ LAP.jalan = false; var sw = document.getElementById('lapJalan'); if(sw) sw.setAttribute('aria-checked', 'false'); toast('Rentang panjang: km jalan besar dimatikan otomatis.'); }
+      var bR = await lapBahanRentang(depos, hari, hari2, st, LAP.jalan);
       if(seq !== LAP_SEQ) return;
+      for(var i = 0; i < depos.length; i++){
+        var hr = [];
+        for(var j = 0; j < bR.days.length; j++){
+          st('Menghitung ' + (depos.length > 1 ? (i + 1) + '/' + depos.length + ' · ' : '') + judulDepo(depos[i]) + ' · hari ' + (j + 1) + '/' + bR.days.length + '…');
+          await new Promise(function(r){ setTimeout(r, 0); });
+          hr.push(await lapHitungDepo(depos[i], bR.days[j], bR.per[bR.days[j]][depos[i]], LAP.jalan));
+          if(seq !== LAP_SEQ) return;
+        }
+        list.push(lapAgregat(hr, key));
+      }
+    } else {
+      var bahan = await lapBahan(depos, hari, st, LAP.jalan);
+      if(seq !== LAP_SEQ) return;
+      for(var i = 0; i < depos.length; i++){
+        st('Menghitung ' + (depos.length > 1 ? (i + 1) + '/' + depos.length + ' · ' : '') + judulDepo(depos[i]) + (LAP.jalan ? ' (jalan besar)…' : '…'));
+        await new Promise(function(r){ setTimeout(r, 0); });
+        list.push(await lapHitungDepo(depos[i], hari, bahan[depos[i]], LAP.jalan));
+        if(seq !== LAP_SEQ) return;
+      }
     }
-    LAP_HASIL = {list:list, hari:hari, depos:depos};
+    LAP_HASIL = {list:list, hari:key, depos:depos};
     if(depos.length === 1){
       var R = list[0];
       LAP.kandidat = R.contoh.slice().sort(function(a, b){ return ((b.ukuran_toko === 'RT-L') - (a.ukuran_toko === 'RT-L')) || String(b.tanggal).localeCompare(String(a.tanggal)); })
@@ -7158,7 +7264,7 @@ async function lapPratinjau(seq){
   lapTombol(true);
 }
 function lapTombol(on){ ['lapSalin', 'lapUnduh', 'lapBagi'].forEach(function(id){ var b = document.getElementById(id); if(b) b.disabled = !on; }); }
-function lapNamaFile(nama){ return 'laporan_harian_' + String(nama).replace(/\s+/g, '_') + '_' + (LAP_HASIL ? LAP_HASIL.hari : hariIni()) + '.png'; }
+function lapNamaFile(nama){ return 'laporan_harian_' + String(nama).replace(/\s+/g, '_') + '_' + String(LAP_HASIL ? LAP_HASIL.hari : hariIni()).replace('~', '_sd_') + '.png'; }
 function lapBlob(cv){ return new Promise(function(res){ cv.toBlob(function(b){ res(b); }, 'image/png'); }); }
 async function lapUnduh(){
   var cvs = await lapKanvas();
@@ -7195,7 +7301,7 @@ document.addEventListener('click', function(ev){
   var box = t.closest('#modalLapBox');
   if(!box){ if(t.id === 'modalLap') lapTutup(); return; }
   if(t.closest('[data-laptutup]')){ lapTutup(); return; }
-  var h = t.closest('[data-laph]'); if(h){ LAP.hari = h.getAttribute('data-laph'); LAP.foto = null; box.innerHTML = lapModalHtml(); lapIkon(box); lapSiapkan(); return; }
+  var h = t.closest('[data-laph]'); if(h){ var rg = lapRentang(h.getAttribute('data-laph')); LAP.hari = rg.a; LAP.hari2 = rg.rentang ? rg.b : null; LAP.foto = null; box.innerHTML = lapModalHtml(); lapIkon(box); lapSiapkan(); return; }
   var m = t.closest('[data-lapm]'); if(m){ if(m.getAttribute('data-lapm') !== 'depo'){ LAP.mode = m.getAttribute('data-lapm'); box.querySelectorAll('[data-lapm]').forEach(function(x){ x.setAttribute('aria-pressed', x === m ? 'true' : 'false'); }); lapTombol(false); lapPratinjau(LAP_SEQ); } return; }
   var f = t.closest('[data-lapf]'); if(f){
     var c = LAP.kandidat[+f.getAttribute('data-lapf')]; if(!c) return;
@@ -7209,9 +7315,14 @@ document.addEventListener('click', function(ev){
   if(t.closest('#lapBagi')){ lapBagi(); return; }
 });
 document.addEventListener('change', function(ev){
-  if(ev.target && ev.target.id === 'lapTgl' && ev.target.value){
+  var id = ev.target && ev.target.id;
+  if((id === 'lapTgl' || id === 'lapTgl2') && ev.target.value){
     var v = ev.target.value; if(v > hariIni()) v = hariIni();
-    LAP.hari = v; LAP.foto = null; var box = document.getElementById('modalLapBox'); box.innerHTML = lapModalHtml(); lapIkon(box); lapSiapkan();
+    var a = id === 'lapTgl' ? v : (LAP.hari || hariIni()), b = id === 'lapTgl2' ? v : (LAP.hari2 || LAP.hari || hariIni());
+    if(b < a){ if(id === 'lapTgl') b = a; else a = b; }
+    if(selisihHari(b, a) > 30){ toast('Maksimal 31 hari.'); if(id === 'lapTgl') b = tambahHari(a, 30); else a = tambahHari(b, -30); }
+    LAP.hari = a; LAP.hari2 = b === a ? null : b; LAP.foto = null;
+    var box = document.getElementById('modalLapBox'); box.innerHTML = lapModalHtml(); lapIkon(box); lapSiapkan();
   }
 });
 document.addEventListener('keydown', function(ev){ if(ev.key === 'Escape' && document.getElementById('modalLap') && document.getElementById('modalLap').classList.contains('show')) lapTutup(); });
