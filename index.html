@@ -536,13 +536,17 @@ details.edmas summary{cursor:pointer;font-weight:700;font-size:13px}
 .lappre button[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#FFFFFF}
 .lappre button:focus-visible,.lapcal button:focus-visible{outline:2px solid var(--or);outline-offset:2px}
 .lapdd{display:flex;gap:10px;margin-top:12px}
-.lapdd>div{flex:1;border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+.lapdd>div,.lapdd>button{flex:1;border:1px solid var(--line);border-radius:12px;padding:8px 12px;background:var(--card);text-align:left;font:inherit;cursor:pointer;min-height:44px}
+.lapdd>button:hover{border-color:var(--navy2)}
+.lapdd>button[aria-expanded="true"]{border-color:var(--or);box-shadow:0 0 0 2px var(--or-soft)}
+.lapdd i{font-style:normal;float:right;color:var(--muted);font-size:12px;margin-top:2px}
 .lapdd span{display:block;font-size:11px;font-weight:700;color:var(--muted)}
 .lapdd b{display:block;font-size:15px;font-weight:800;color:var(--ink)}
 .lapcal{border:1px solid var(--line);border-radius:16px;padding:12px 12px 10px;margin-top:12px}
 .lapcal-h{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
 .lapcal-h b{font-size:15px;font-weight:800;color:var(--ink)}
 .lapcal-h em{font-style:normal;font-size:12px;font-weight:600;color:var(--muted);margin-left:auto}
+.lapcal-h .lapx{border:0;background:transparent;font-size:18px;color:var(--muted)}
 .lapcal-h button{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font:inherit;font-size:16px;font-weight:800;line-height:1}
 .lapcal-h button:disabled{opacity:.35;cursor:default}
 .lapcal-g{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
@@ -7193,35 +7197,42 @@ function lapTeks(list, hari, label){
 var LAP_BLN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 function lapTglTeks(d){ var p = d.split('-').map(Number); return p[2] + ' ' + LAP_BLN[p[1] - 1].slice(0, 3) + ' ' + p[0]; }
 function lapPeriodeHtml(){
-  var kini = hariIni(), h = LAP.hari || kini, h2 = LAP.hari2 || h, key = h2 !== h ? h + '~' + h2 : h, kemarin = tambahHari(kini, -1);
-  var tujuh = tambahHari(kini, -6) + '~' + kini, mtd = kini.slice(0, 8) + '01~' + kini;
-  if(mtd.split('~')[0] === kini) mtd = kini;
-  var pre = [[kini, 'Hari ini'], [kemarin, 'Kemarin'], [tujuh, '7 hari terakhir'], [mtd, 'Bulan ini (MTD)']].map(function(p){
-    return '<button type="button" data-laph="' + p[0] + '" aria-pressed="' + (p[0] === key && !LAP.pilih ? 'true' : 'false') + '">' + p[1] + '</button>';
-  }).join('');
-  var bln = LAP.calM || h2.slice(0, 7), y = +bln.slice(0, 4), m = +bln.slice(5, 7);
-  var awal = bln + '-01', jml = new Date(Date.UTC(y, m, 0)).getUTCDate(), geser = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7;
-  var batasLalu = tambahHari(kini.slice(0, 8) + '01', -370).slice(0, 7);
-  var sel = '<i>Sen</i><i>Sel</i><i>Rab</i><i>Kam</i><i>Jum</i><i>Sab</i><i>Min</i>';
-  for(var k = 0; k < geser; k++) sel += '<span></span>';
-  for(var d = 1; d <= jml; d++){
-    var t = tambahHari(awal, d - 1), c = [], fut = t > kini;
-    if((geser + d - 1) % 7 === 6) c.push('min');
-    if(!fut && t >= h && t <= h2) c.push('in');
-    if(!fut && (t === h || t === h2)) c.push('ujung');
-    if(t === kini) c.push('kini');
-    sel += '<button type="button" data-lapd="' + t + '" class="' + c.join(' ') + '"' + (fut ? ' disabled' : '') + ' aria-label="' + lapTglTeks(t) + '"' + (c.indexOf('ujung') >= 0 ? ' aria-pressed="true"' : '') + '>' + d + '</button>';
+  /* v32.2: kalender tertutup; terbuka dari chip "Pilih Tanggal" (pilih awal lalu akhir) atau dari kotak Dari / Sampai (ubah salah satu), lalu menutup sendiri */
+  var kini = hariIni(), h = LAP.hari || kini, h2 = LAP.hari2 || h, key = h2 !== h ? h + '~' + h2 : h, kemarin = tambahHari(kini, -1), mode = LAP.cal || null;
+  var tujuh = tambahHari(kini, -6) + '~' + kini, cepat = [[kini, 'Hari ini'], [kemarin, 'Kemarin'], [tujuh, '7 hari terakhir']];
+  var adaCepat = cepat.some(function(p){ return p[0] === key; });
+  var pre = cepat.map(function(p){ return '<button type="button" data-laph="' + p[0] + '" aria-pressed="' + (p[0] === key && !mode ? 'true' : 'false') + '">' + p[1] + '</button>'; }).join('') +
+    '<button type="button" data-lapcal="range" aria-expanded="' + (mode ? 'true' : 'false') + '" aria-pressed="' + ((mode || !adaCepat) ? 'true' : 'false') + '">Pilih Tanggal</button>';
+  var tunggu = mode === 'akhir';
+  var html = '<div class="lappre">' + pre + '</div>' +
+    '<div class="lapdd"><button type="button" data-lapcal="dari" aria-expanded="' + (mode === 'dari' || mode === 'range' ? 'true' : 'false') + '"><span>Dari <i>ubah</i></span><b>' + lapTglTeks(h) + '</b></button>' +
+    '<button type="button" data-lapcal="sampai" aria-expanded="' + (mode === 'sampai' || mode === 'akhir' ? 'true' : 'false') + '"><span>Sampai <i>ubah</i></span><b>' + (tunggu ? '…' : lapTglTeks(h2)) + '</b></button></div>';
+  if(mode){
+    var bln = LAP.calM || ((mode === 'dari' || mode === 'range') ? h : h2).slice(0, 7), y = +bln.slice(0, 4), m = +bln.slice(5, 7);
+    var awal = bln + '-01', jml = new Date(Date.UTC(y, m, 0)).getUTCDate(), geser = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7;
+    var batasLalu = tambahHari(kini.slice(0, 8) + '01', -370).slice(0, 7);
+    var sel = '<i>Sen</i><i>Sel</i><i>Rab</i><i>Kam</i><i>Jum</i><i>Sab</i><i>Min</i>';
+    for(var k = 0; k < geser; k++) sel += '<span></span>';
+    for(var d = 1; d <= jml; d++){
+      var t = tambahHari(awal, d - 1), c = [], fut = t > kini;
+      if((geser + d - 1) % 7 === 6) c.push('min');
+      if(!fut && !tunggu && t >= h && t <= h2) c.push('in');
+      if(!fut && (t === h || (!tunggu && t === h2))) c.push('ujung');
+      if(t === kini) c.push('kini');
+      sel += '<button type="button" data-lapd="' + t + '" class="' + c.join(' ') + '"' + (fut ? ' disabled' : '') + ' aria-label="' + lapTglTeks(t) + '"' + (c.indexOf('ujung') >= 0 ? ' aria-pressed="true"' : '') + '>' + d + '</button>';
+    }
+    var hint = mode === 'range' ? 'Pilih tanggal awal' : (mode === 'akhir' ? 'Pilih tanggal akhir' : (mode === 'dari' ? 'Ubah tanggal awal' : 'Ubah tanggal akhir'));
+    html += '<div class="lapcal"><div class="lapcal-h"><button type="button" data-lapbln="-1" aria-label="Bulan sebelumnya"' + (bln <= batasLalu ? ' disabled' : '') + '>‹</button><b>' + LAP_BLN[m - 1] + ' ' + y + '</b>' +
+      '<button type="button" data-lapbln="1" aria-label="Bulan berikutnya"' + (bln >= kini.slice(0, 7) ? ' disabled' : '') + '>›</button><em>' + hint + '</em><button type="button" class="lapx" data-lapcal="tutup" aria-label="Tutup kalender">×</button></div>' +
+      '<div class="lapcal-g">' + sel + '</div><div class="lapcal-f"><span>Minggu = libur, tidak dihitung</span><span>Maks. 31 hari</span></div></div>';
   }
   var nh = lapHariKerja(h, h2).length;
   var ring = h === h2 ? 'Laporan satu hari: ' + lapNamaHari(h) + '.'
-    : 'Rentang ' + (h.slice(0, 7) === h2.slice(0, 7) ? String(+h.slice(8)) : (h.slice(0, 4) === h2.slice(0, 4) ? lapTglTeks(h).replace(/ \d{4}$/, '') : lapTglTeks(h))) + ' – ' + lapTglTeks(h2) + ' = ' + nh + ' hari kerja. Angka tiap hari dihitung dengan aturan harian yang sama, lalu dijumlahkan.';
-  return '<div class="lappre">' + pre + '</div>' +
-    '<div class="lapdd"><div><span>Dari</span><b>' + lapTglTeks(h) + '</b></div><div><span>Sampai</span><b>' + (LAP.pilih ? '…' : lapTglTeks(h2)) + '</b></div></div>' +
-    '<div class="lapcal"><div class="lapcal-h"><button type="button" data-lapbln="-1" aria-label="Bulan sebelumnya"' + (bln <= batasLalu ? ' disabled' : '') + '>‹</button><b>' + LAP_BLN[m - 1] + ' ' + y + '</b>' +
-      '<button type="button" data-lapbln="1" aria-label="Bulan berikutnya"' + (bln >= kini.slice(0, 7) ? ' disabled' : '') + '>›</button><em>' + (LAP.pilih ? 'Pilih tanggal akhir' : 'Klik tanggal awal, lalu akhir') + '</em></div>' +
-      '<div class="lapcal-g">' + sel + '</div><div class="lapcal-f"><span>Minggu = libur, tidak dihitung</span><span>Maks. 31 hari</span></div></div>' +
-    '<div class="lapsum">' + ring + '</div>';
+    : 'Rentang ' + (h.slice(0, 7) === h2.slice(0, 7) ? String(+h.slice(8)) : (h.slice(0, 4) === h2.slice(0, 4) ? lapTglTeks(h).replace(/ \d{4}$/, '') : lapTglTeks(h))) + ' – ' + lapTglTeks(h2) + ' = ' + nh + ' hari kerja (Minggu tidak dihitung), dijumlahkan dari laporan per hari.';
+  if(!tunggu) html += '<div class="lapsum">' + ring + '</div>';
+  return html;
 }
+function lapCalTutup(hitung){ var ada = !!LAP.cal; LAP.cal = null; LAP.calM = null; lapPerSegarkan(); if(ada && hitung) lapJadwalSiapkan(0); }
 function lapPerSegarkan(){ var e = document.getElementById('lapPer'); if(e) e.innerHTML = lapPeriodeHtml(); }
 var LAP_TMR = null;
 function lapJadwalSiapkan(ms){ clearTimeout(LAP_TMR); LAP_SEQ++; lapTombol(false); var st = document.getElementById('lapStatus'); if(st) st.textContent = 'Menyiapkan…'; LAP_TMR = setTimeout(function(){ lapSiapkan(); }, ms); }
@@ -7249,7 +7260,7 @@ var LAP_HASIL = null, LAP_SEQ = 0;
 function lapBuka(){
   if(!DEPOT){ toast('Pilih area dulu.'); return; }
   if(!lapDepos().length){ toast('Tidak ada depo di cakupan ini.'); return; }
-  LAP.hari = LAP.hari || hariIni(); LAP.pilih = false; LAP.calM = null; LAP.foto = null; LAP.kandidat = [];
+  LAP.hari = LAP.hari || hariIni(); LAP.cal = null; LAP.calM = null; LAP.foto = null; LAP.kandidat = [];
   if(lapDepos().length > 1 && LAP.mode === 'depo') LAP.mode = 'rekap';
   LAP.jalan = lapDepos().length <= 6 ? true : LAP.jalanMulti === true;
   var m = document.getElementById('modalLap'), b = document.getElementById('modalLapBox');
@@ -7359,15 +7370,20 @@ document.addEventListener('click', function(ev){
   var box = t.closest('#modalLapBox');
   if(!box){ if(t.id === 'modalLap') lapTutup(); return; }
   if(t.closest('[data-laptutup]')){ lapTutup(); return; }
-  var h = t.closest('[data-laph]'); if(h){ var rg = lapRentang(h.getAttribute('data-laph')); LAP.hari = rg.a; LAP.hari2 = rg.rentang ? rg.b : null; LAP.pilih = false; LAP.calM = null; LAP.foto = null; lapPerSegarkan(); lapJadwalSiapkan(0); return; }
-  var bl = t.closest('[data-lapbln]'); if(bl){ if(bl.disabled) return; var cm = (LAP.calM || (LAP.hari2 || LAP.hari || hariIni()).slice(0, 7)) + '-01', np = +bl.getAttribute('data-lapbln');
+  var h = t.closest('[data-laph]'); if(h){ var rg = lapRentang(h.getAttribute('data-laph')); LAP.hari = rg.a; LAP.hari2 = rg.rentang ? rg.b : null; LAP.cal = null; LAP.calM = null; LAP.foto = null; lapPerSegarkan(); lapJadwalSiapkan(0); return; }
+  var bl = t.closest('[data-lapbln]'); if(bl){ if(bl.disabled) return; var cm = (LAP.calM || (((LAP.cal === 'dari' || LAP.cal === 'range') ? LAP.hari : (LAP.hari2 || LAP.hari)) || hariIni()).slice(0, 7)) + '-01', np = +bl.getAttribute('data-lapbln');
     var nd = np > 0 ? tambahHari(cm, 32) : tambahHari(cm, -1); LAP.calM = nd.slice(0, 7); lapPerSegarkan(); return; }
-  var dd = t.closest('[data-lapd]'); if(dd){ if(dd.disabled) return; var v = dd.getAttribute('data-lapd');
-    if(LAP.pilih){ var a = LAP.hari, b = v; if(b < a){ var tm = a; a = b; b = tm; }
-      if(selisihHari(b, a) > 30){ toast('Maksimal 31 hari.'); b = tambahHari(a, 30); }
-      LAP.hari = a; LAP.hari2 = b === a ? null : b; LAP.pilih = false; }
-    else { LAP.hari = v; LAP.hari2 = null; LAP.pilih = true; }
-    LAP.calM = v.slice(0, 7); LAP.foto = null; lapPerSegarkan(); lapJadwalSiapkan(LAP.pilih ? 1200 : 0); return; }
+  var cb = t.closest('[data-lapcal]'); if(cb){ var md = cb.getAttribute('data-lapcal');
+    if(md === 'tutup'){ lapCalTutup(LAP.cal === 'akhir'); return; }
+    if(LAP.cal && (LAP.cal === md || (md === 'sampai' && LAP.cal === 'akhir') || (md === 'dari' && LAP.cal === 'range'))){ lapCalTutup(LAP.cal === 'akhir'); return; }
+    LAP.cal = md; LAP.calM = null; lapPerSegarkan(); return; }
+  var dd = t.closest('[data-lapd]'); if(dd){ if(dd.disabled) return; var v = dd.getAttribute('data-lapd'), md2 = LAP.cal, a1 = LAP.hari || hariIni(), b1 = LAP.hari2 || a1;
+    if(md2 === 'range'){ LAP.hari = v; LAP.hari2 = null; LAP.cal = 'akhir'; LAP.calM = v.slice(0, 7); lapPerSegarkan(); return; }
+    if(md2 === 'akhir'){ a1 = LAP.hari; b1 = v; if(b1 < a1){ var tm = a1; a1 = b1; b1 = tm; } if(selisihHari(b1, a1) > 30){ toast('Maksimal 31 hari.'); b1 = tambahHari(a1, 30); } }
+    else if(md2 === 'dari'){ a1 = v; if(b1 < a1) b1 = a1; if(selisihHari(b1, a1) > 30){ toast('Maksimal 31 hari.'); b1 = tambahHari(a1, 30); } }
+    else if(md2 === 'sampai'){ b1 = v; if(b1 < a1) a1 = b1; if(selisihHari(b1, a1) > 30){ toast('Maksimal 31 hari.'); a1 = tambahHari(b1, -30); } }
+    if(b1 > hariIni()) b1 = hariIni();
+    LAP.hari = a1; LAP.hari2 = b1 === a1 ? null : b1; LAP.foto = null; LAP.cal = null; LAP.calM = null; lapPerSegarkan(); lapJadwalSiapkan(0); return; }
   var m = t.closest('[data-lapm]'); if(m){ if(m.getAttribute('data-lapm') !== 'depo'){ LAP.mode = m.getAttribute('data-lapm'); box.querySelectorAll('[data-lapm]').forEach(function(x){ x.setAttribute('aria-pressed', x === m ? 'true' : 'false'); }); lapTombol(false); lapPratinjau(LAP_SEQ); } return; }
   var f = t.closest('[data-lapf]'); if(f){
     var c = LAP.kandidat[+f.getAttribute('data-lapf')]; if(!c) return;
