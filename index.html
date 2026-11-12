@@ -530,6 +530,33 @@ details.edmas summary{cursor:pointer;font-weight:700;font-size:13px}
 .lapnew{background:#fff;color:#B9480A;font-size:10px;font-weight:800;border-radius:999px;padding:2px 7px;letter-spacing:.05em;margin-left:2px}
 .modalInfo .box.lapbox{max-width:780px}
 .lapl{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 8px}
+.lapper{max-width:470px}
+.lappre{display:flex;flex-wrap:wrap;gap:8px}
+.lappre button{min-height:42px;border-radius:12px;padding:0 15px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.lappre button[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#FFFFFF}
+.lappre button:focus-visible,.lapcal button:focus-visible{outline:2px solid var(--or);outline-offset:2px}
+.lapdd{display:flex;gap:10px;margin-top:12px}
+.lapdd>div{flex:1;border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+.lapdd span{display:block;font-size:11px;font-weight:700;color:var(--muted)}
+.lapdd b{display:block;font-size:15px;font-weight:800;color:var(--ink)}
+.lapcal{border:1px solid var(--line);border-radius:16px;padding:12px 12px 10px;margin-top:12px}
+.lapcal-h{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.lapcal-h b{font-size:15px;font-weight:800;color:var(--ink)}
+.lapcal-h em{font-style:normal;font-size:12px;font-weight:600;color:var(--muted);margin-left:auto}
+.lapcal-h button{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font:inherit;font-size:16px;font-weight:800;line-height:1}
+.lapcal-h button:disabled{opacity:.35;cursor:default}
+.lapcal-g{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
+.lapcal-g i{font-style:normal;text-align:center;font-size:11px;font-weight:800;color:var(--muted);padding:4px 0}
+.lapcal-g button{height:38px;border:0;border-radius:8px;background:transparent;color:var(--ink);font:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:0}
+.lapcal-g button:not(.ujung):not(.in):not(:disabled):hover{background:var(--tint)}
+.lapcal-g button.min{color:var(--muted)}
+.lapcal-g button.in{background:var(--or-soft);color:var(--or-ink2);border-radius:4px}
+.lapcal-g button.ujung{background:var(--navy);color:#FFFFFF;font-weight:800;border-radius:10px}
+.lapcal-g button.kini:not(.ujung){box-shadow:inset 0 0 0 1.5px var(--navy)}
+.lapcal-g button:disabled{opacity:.35;cursor:default;background:transparent}
+.lapcal-g span{display:block}
+.lapcal-f{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:11px;font-weight:600;color:var(--muted)}
+.lapsum{background:var(--tint2);border-radius:12px;padding:10px 14px;font-size:13px;font-weight:600;line-height:1.45;margin-top:12px;color:var(--ink)}
 .lapdate{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--muted);padding:0 8px}
 .lapdate input{font:inherit;border:1px solid var(--line);border-radius:8px;padding:4px 6px;background:var(--card);color:var(--ink)}
 .lapfs{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
@@ -7162,10 +7189,44 @@ function lapTeks(list, hari, label){
   return s;
 }
 /* ---------- modal ---------- */
+/* v32.1: pemilih periode sesuai mockup (chip + kotak Dari/Sampai + kalender sendiri, bukan input tanggal bawaan browser) */
+var LAP_BLN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+function lapTglTeks(d){ var p = d.split('-').map(Number); return p[2] + ' ' + LAP_BLN[p[1] - 1].slice(0, 3) + ' ' + p[0]; }
+function lapPeriodeHtml(){
+  var kini = hariIni(), h = LAP.hari || kini, h2 = LAP.hari2 || h, key = h2 !== h ? h + '~' + h2 : h, kemarin = tambahHari(kini, -1);
+  var tujuh = tambahHari(kini, -6) + '~' + kini, mtd = kini.slice(0, 8) + '01~' + kini;
+  if(mtd.split('~')[0] === kini) mtd = kini;
+  var pre = [[kini, 'Hari ini'], [kemarin, 'Kemarin'], [tujuh, '7 hari terakhir'], [mtd, 'Bulan ini (MTD)']].map(function(p){
+    return '<button type="button" data-laph="' + p[0] + '" aria-pressed="' + (p[0] === key && !LAP.pilih ? 'true' : 'false') + '">' + p[1] + '</button>';
+  }).join('');
+  var bln = LAP.calM || h2.slice(0, 7), y = +bln.slice(0, 4), m = +bln.slice(5, 7);
+  var awal = bln + '-01', jml = new Date(Date.UTC(y, m, 0)).getUTCDate(), geser = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7;
+  var batasLalu = tambahHari(kini.slice(0, 8) + '01', -370).slice(0, 7);
+  var sel = '<i>Sen</i><i>Sel</i><i>Rab</i><i>Kam</i><i>Jum</i><i>Sab</i><i>Min</i>';
+  for(var k = 0; k < geser; k++) sel += '<span></span>';
+  for(var d = 1; d <= jml; d++){
+    var t = tambahHari(awal, d - 1), c = [], fut = t > kini;
+    if((geser + d - 1) % 7 === 6) c.push('min');
+    if(!fut && t >= h && t <= h2) c.push('in');
+    if(!fut && (t === h || t === h2)) c.push('ujung');
+    if(t === kini) c.push('kini');
+    sel += '<button type="button" data-lapd="' + t + '" class="' + c.join(' ') + '"' + (fut ? ' disabled' : '') + ' aria-label="' + lapTglTeks(t) + '"' + (c.indexOf('ujung') >= 0 ? ' aria-pressed="true"' : '') + '>' + d + '</button>';
+  }
+  var nh = lapHariKerja(h, h2).length;
+  var ring = h === h2 ? 'Laporan satu hari: ' + lapNamaHari(h) + '.'
+    : 'Rentang ' + (h.slice(0, 7) === h2.slice(0, 7) ? String(+h.slice(8)) : (h.slice(0, 4) === h2.slice(0, 4) ? lapTglTeks(h).replace(/ \d{4}$/, '') : lapTglTeks(h))) + ' – ' + lapTglTeks(h2) + ' = ' + nh + ' hari kerja. Angka tiap hari dihitung dengan aturan harian yang sama, lalu dijumlahkan.';
+  return '<div class="lappre">' + pre + '</div>' +
+    '<div class="lapdd"><div><span>Dari</span><b>' + lapTglTeks(h) + '</b></div><div><span>Sampai</span><b>' + (LAP.pilih ? '…' : lapTglTeks(h2)) + '</b></div></div>' +
+    '<div class="lapcal"><div class="lapcal-h"><button type="button" data-lapbln="-1" aria-label="Bulan sebelumnya"' + (bln <= batasLalu ? ' disabled' : '') + '>‹</button><b>' + LAP_BLN[m - 1] + ' ' + y + '</b>' +
+      '<button type="button" data-lapbln="1" aria-label="Bulan berikutnya"' + (bln >= kini.slice(0, 7) ? ' disabled' : '') + '>›</button><em>' + (LAP.pilih ? 'Pilih tanggal akhir' : 'Klik tanggal awal, lalu akhir') + '</em></div>' +
+      '<div class="lapcal-g">' + sel + '</div><div class="lapcal-f"><span>Minggu = libur, tidak dihitung</span><span>Maks. 31 hari</span></div></div>' +
+    '<div class="lapsum">' + ring + '</div>';
+}
+function lapPerSegarkan(){ var e = document.getElementById('lapPer'); if(e) e.innerHTML = lapPeriodeHtml(); }
+var LAP_TMR = null;
+function lapJadwalSiapkan(ms){ clearTimeout(LAP_TMR); LAP_SEQ++; lapTombol(false); var st = document.getElementById('lapStatus'); if(st) st.textContent = 'Menyiapkan…'; LAP_TMR = setTimeout(function(){ lapSiapkan(); }, ms); }
 function lapModalHtml(){
-  var depos = lapDepos(), multi = depos.length > 1, h = LAP.hari || hariIni(), h2 = LAP.hari2 || null, kemarin = tambahHari(hariIni(), -1), key = h2 ? h + '~' + h2 : h;
-  var tujuh = tambahHari(hariIni(), -6) + '~' + hariIni(), mtd = hariIni().slice(0, 8) + '01~' + hariIni();
-  if(mtd.split('~')[0] === hariIni()) mtd = hariIni();
+  var depos = lapDepos(), multi = depos.length > 1;
   var segB = function(v, t, on, attr){ return '<button type="button" ' + attr + '="' + v + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + t + '</button>'; };
   var mode = multi ? LAP.mode : 'depo';
   var foto = LAP.kandidat.slice(0, 8).map(function(t, i){
@@ -7173,10 +7234,7 @@ function lapModalHtml(){
     return '<button type="button" class="lapf' + (on ? ' on' : '') + '" data-lapf="' + i + '" title="' + esc(t.nama_toko || '') + '"><img loading="lazy" alt="" src="' + esc(t.foto_url) + '"><i></i><b>' + esc((t.ukuran_toko || '?') + ' · ' + (t.nama_toko || 'Tanpa nama')) + '</b></button>';
   }).join('');
   return '<div class="row sp"><h3 style="margin:0">' + (multi ? 'Laporan harian' : 'Laporan harian depo') + '</h3><button class="icon-btn" style="width:34px;height:34px" type="button" data-laptutup="1" aria-label="Tutup">' + ico('x', 'width:16px;height:16px') + '</button></div>' +
-    '<div class="lapl">Periode</div><div class="seg sm wrap" style="flex-wrap:wrap">' + segB(hariIni(), 'Hari ini · ' + lapNamaHari(hariIni()).split(',')[0], key === hariIni(), 'data-laph') + segB(kemarin, 'Kemarin', key === kemarin, 'data-laph') +
-      segB(tujuh, '7 hari terakhir', key === tujuh, 'data-laph') + segB(mtd, 'Bulan ini (MTD)', key === mtd, 'data-laph') + '</div>' +
-    '<div class="row g8 wrap" style="margin-top:8px"><label class="lapdate">Dari <input type="date" id="lapTgl" value="' + h + '" max="' + hariIni() + '"></label><label class="lapdate">Sampai <input type="date" id="lapTgl2" value="' + (h2 || h) + '" max="' + hariIni() + '"></label></div>' +
-    (h2 ? '<div class="muted" style="font-size:12px;margin-top:6px">Rentang dihitung per hari kerja (Senin–Sabtu) lalu dijumlahkan. Maksimal 31 hari.</div>' : '') +
+    '<div class="lapl">Periode</div><div class="lapper" id="lapPer">' + lapPeriodeHtml() + '</div>' +
     '<div class="lapl">Cakupan</div><div class="seg sm" style="flex-wrap:wrap">' +
       (multi ? segB('rekap', 'Rekap ' + depos.length + ' depo · 1 gambar', mode === 'rekap', 'data-lapm') + segB('perdepo', '1 gambar per depo', mode === 'perdepo', 'data-lapm')
              : segB('depo', 'Depo ini (' + judulDepo(depos[0] || '-') + ')', true, 'data-lapm')) + '</div>' +
@@ -7191,7 +7249,7 @@ var LAP_HASIL = null, LAP_SEQ = 0;
 function lapBuka(){
   if(!DEPOT){ toast('Pilih area dulu.'); return; }
   if(!lapDepos().length){ toast('Tidak ada depo di cakupan ini.'); return; }
-  LAP.hari = LAP.hari || hariIni(); LAP.foto = null; LAP.kandidat = [];
+  LAP.hari = LAP.hari || hariIni(); LAP.pilih = false; LAP.calM = null; LAP.foto = null; LAP.kandidat = [];
   if(lapDepos().length > 1 && LAP.mode === 'depo') LAP.mode = 'rekap';
   LAP.jalan = lapDepos().length <= 6 ? true : LAP.jalanMulti === true;
   var m = document.getElementById('modalLap'), b = document.getElementById('modalLapBox');
@@ -7301,7 +7359,15 @@ document.addEventListener('click', function(ev){
   var box = t.closest('#modalLapBox');
   if(!box){ if(t.id === 'modalLap') lapTutup(); return; }
   if(t.closest('[data-laptutup]')){ lapTutup(); return; }
-  var h = t.closest('[data-laph]'); if(h){ var rg = lapRentang(h.getAttribute('data-laph')); LAP.hari = rg.a; LAP.hari2 = rg.rentang ? rg.b : null; LAP.foto = null; box.innerHTML = lapModalHtml(); lapIkon(box); lapSiapkan(); return; }
+  var h = t.closest('[data-laph]'); if(h){ var rg = lapRentang(h.getAttribute('data-laph')); LAP.hari = rg.a; LAP.hari2 = rg.rentang ? rg.b : null; LAP.pilih = false; LAP.calM = null; LAP.foto = null; lapPerSegarkan(); lapJadwalSiapkan(0); return; }
+  var bl = t.closest('[data-lapbln]'); if(bl){ if(bl.disabled) return; var cm = (LAP.calM || (LAP.hari2 || LAP.hari || hariIni()).slice(0, 7)) + '-01', np = +bl.getAttribute('data-lapbln');
+    var nd = np > 0 ? tambahHari(cm, 32) : tambahHari(cm, -1); LAP.calM = nd.slice(0, 7); lapPerSegarkan(); return; }
+  var dd = t.closest('[data-lapd]'); if(dd){ if(dd.disabled) return; var v = dd.getAttribute('data-lapd');
+    if(LAP.pilih){ var a = LAP.hari, b = v; if(b < a){ var tm = a; a = b; b = tm; }
+      if(selisihHari(b, a) > 30){ toast('Maksimal 31 hari.'); b = tambahHari(a, 30); }
+      LAP.hari = a; LAP.hari2 = b === a ? null : b; LAP.pilih = false; }
+    else { LAP.hari = v; LAP.hari2 = null; LAP.pilih = true; }
+    LAP.calM = v.slice(0, 7); LAP.foto = null; lapPerSegarkan(); lapJadwalSiapkan(LAP.pilih ? 1200 : 0); return; }
   var m = t.closest('[data-lapm]'); if(m){ if(m.getAttribute('data-lapm') !== 'depo'){ LAP.mode = m.getAttribute('data-lapm'); box.querySelectorAll('[data-lapm]').forEach(function(x){ x.setAttribute('aria-pressed', x === m ? 'true' : 'false'); }); lapTombol(false); lapPratinjau(LAP_SEQ); } return; }
   var f = t.closest('[data-lapf]'); if(f){
     var c = LAP.kandidat[+f.getAttribute('data-lapf')]; if(!c) return;
