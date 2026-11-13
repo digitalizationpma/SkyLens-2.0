@@ -2244,24 +2244,41 @@ function jlKosongkan(J){
   Object.keys(J.perKey).forEach(function(k){ var o = J.perKey[k]; o.C = {besar:0, 'besar?':0, mobil:0, motor:0}; Object.keys(o.names).forEach(function(n){ o.names[n].C = 0; }); });
 }
 function jlIdBaris(p){ return (p.kode_salesman || '') + '|' + (p.waktu || '') + '|' + p.lat + '|' + p.lon; }
+/* v32.5: ambil jejak satu depo per 1000 baris berdasar waktu (keyset), bukan offset —
+   offset dalam (range 20000+) kena batas waktu query Supabase di depo besar → data jalan kosong */
+async function jlAmbilJejakDepo(dep, since){
+  var semua = [], seen = {}, last = since || null;
+  for(var hal = 0; hal < 600; hal++){
+    var r = null;
+    for(var coba = 0; coba < 4; coba++){
+      var q = sb.from('jejak_lokasi').select('kode_salesman,key_petak,lat,lon,waktu,akurasi').eq('depot', dep);
+      if(last) q = q.gte('waktu', last);
+      r = await q.order('waktu', {ascending:true}).limit(1000);
+      if(!r.error) break;
+      await new Promise(function(ok){ setTimeout(ok, 1500); });
+    }
+    if(r.error) throw r.error;
+    var d = r.data || [], tambah = 0;
+    d.forEach(function(p){ var id = jlIdBaris(p); if(!seen[id]){ seen[id] = 1; semua.push(p); tambah++; } });
+    if(d.length < 1000) break;
+    var nl = d[d.length - 1].waktu;
+    if(nl === last && !tambah) break;
+    last = nl;
+  }
+  return semua;
+}
 async function jlSinkron(J, dep, cnt){
   /* cnt = jumlah baris jejak depo ini di server (null = tidak diketahui). → potongan jalan yang berubah, atau -1 kalau tidak ada yang perlu diambil */
   var awal = !J.lastW || J.srvN == null || cnt == null;
   if(!awal && cnt === J.srvN) return -1;
   var since = awal ? null : J.lastW;
-  var rows = await ambilSemuaBaris(function(){
-    var q = sb.from('jejak_lokasi').select('kode_salesman,key_petak,lat,lon,waktu,akurasi').eq('depot', dep);   // semua titik jejak di depo ini (petak mana pun), supaya % jalan akurat
-    if(since) q = q.gte('waktu', since);
-    return q.order('waktu', {ascending:true});
-  });
+  var rows = await jlAmbilJejakDepo(dep, since);   // semua titik jejak di depo ini (petak mana pun), supaya % jalan akurat
   rows = rows || [];
   if(!awal){
     var baru = 0;
     rows.forEach(function(p){ if(p.lat == null || p.lon == null || !J.seen[jlIdBaris(p)]) baru++; });
     if(cnt - J.srvN > baru){     // ada titik lama yang masuk belakangan → ambil ulang semua
-      rows = await ambilSemuaBaris(function(){
-        return sb.from('jejak_lokasi').select('kode_salesman,key_petak,lat,lon,waktu,akurasi').eq('depot', dep).order('waktu', {ascending:true});
-      }) || [];
+      rows = await jlAmbilJejakDepo(dep, null) || [];
       jlKosongkan(J);
     }
   }
