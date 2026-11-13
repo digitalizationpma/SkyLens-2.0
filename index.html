@@ -1671,7 +1671,7 @@ let SUPER_ADMIN = false;    // true kalau lagi mode Super Admin (semua depot dig
 var DEPO_MULTI = null, MULTI_KODE = '', MULTI_LABEL = '';
 function saringDepo(q, kol){
   kol = kol || 'depot';
-  if(DEPOT === '__ALL__') return (DEPO_MULTI && DEPO_MULTI.length) ? q.in(kol, DEPO_MULTI) : q;
+  if(DEPOT === '__ALL__') return (DEPO_MULTI && DEPO_MULTI.length) ? q.in(kol, DEPO_MULTI) : q.or(kol + '.is.null,' + kol + '.neq.TESTING');   // v32.3: data uji (depo TESTING) tidak ikut total Super Admin
   return DEPOT ? q.eq(kol, DEPOT) : q;
 }
 let KEY_PETAK_DEPOT = {};   // key_petak -> nama depot asalnya (dipakai buat insert pas Super Admin)
