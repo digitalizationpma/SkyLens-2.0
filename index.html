@@ -1777,6 +1777,10 @@ function buatStubSupabase(){
   return { from: function(){ return q(); } };
 }
 const sb = SB_SIAP ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : buatStubSupabase();
+/* v37e: sesi habis -> kembali ke login, jangan tampil kosong */
+try{ if(SB_SIAP && sb.auth && sb.auth.onAuthStateChange) sb.auth.onAuthStateChange(function(ev){ if(ev === 'SIGNED_OUT' && AUTH_PROFIL && !KELUAR_JALAN) setTimeout(function(){ keluarSesi('Sesi login habis. Silakan masuk lagi.', false); }, 0); }); }catch(e){}
+async function cekSesiMasihAda(){ if(!AUTH_PROFIL || !SB_SIAP || !sb.auth) return true; try{ var s = await sb.auth.getSession(); if(s && s.data && s.data.session) return true; }catch(e){ return true; } keluarSesi('Sesi login habis. Silakan masuk lagi.', false); return false; }
+document.addEventListener('visibilitychange', function(){ if(!document.hidden) cekSesiMasihAda(); });
 
 // ==== password admin: dipakai buat hapus jejak GPS (dicek di server, tidak ditulis di file ini) ====
 var ADMIN_PW = null;
@@ -4260,11 +4264,18 @@ async function masukTestingSandboxDariSuperAdmin(){
 async function logoutUser(){
   var r = await tanyaForm({judul:'Logout / ganti user?', pesan:'Apakah kamu yakin untuk logout / ganti user? Kamu akan kembali ke halaman pilih Business Manager atau Regional Manager.', ok:'Ya, logout', batal:'Batal', bahaya:true});
   if(!r) return;
+  await keluarSesi('Kamu sudah logout.', true);
+}
+/* v37e: keluar dari sesi (manual atau karena sesi login habis) */
+var KELUAR_JALAN = false;
+async function keluarSesi(pesan, manual){
+  if(KELUAR_JALAN) return; KELUAR_JALAN = true;
+  try{
   try{ matikanGpsLiveJikaAktif(); }catch(e){}
   try{ if(SBX_TIMER) toggleSandbox(); }catch(e){}
   try{ pulseTutup(); tutupCari(); }catch(e){}
   try{ uiResetData(); }catch(e){}
-  try{ if(SB_SIAP && sb.auth && AUTH_PROFIL) await sb.auth.signOut(); }catch(e){}
+  try{ if(SB_SIAP && sb.auth && AUTH_PROFIL) await sb.auth.signOut(manual ? undefined : {scope:'local'}); }catch(e){}
   AUTH_PROFIL = null;
   SA_UNLOCK = false; SUPER_ADMIN = false; SCOPE = null; DEPOT = null; D = null; DEPO_MULTI = null; MULTI_KODE = ''; MULTI_LABEL = ''; MODEL = null; MODE_UI = 'depo'; LOGIN_BARU = false;
   try{ if(gZona){ map.removeLayer(gZona); gZona = null; } if(gOutlet){ map.removeLayer(gOutlet); gOutlet = null; } }catch(e){}
@@ -4275,7 +4286,9 @@ async function logoutUser(){
   var ge = document.getElementById('gateErr'); if(ge) ge.textContent = '';
   tampilkanGateDepot();
   try{ renderPulse(); syncSABtn(); themeGateSync(); }catch(e){}
-  toast('Kamu sudah logout.');
+  if(!manual){ try{ var ge2 = document.getElementById('gateErr'); if(ge2) ge2.textContent = pesan; }catch(e){} }
+  toast(pesan);
+  } finally { KELUAR_JALAN = false; }
 }
 function tampilkanGateDepot(){
   document.getElementById('gateDepotOverlay').style.display = 'flex';
@@ -4952,6 +4965,7 @@ var _autoBusy = false;
 async function autoRefresh(){
   if(_autoBusy || document.hidden || !DEPOT || !D) return;
   if($('#modalAssign').classList.contains('show') || $('#modalTanya').classList.contains('show')) return;
+  if(!(await cekSesiMasihAda())) return;
   _autoBusy = true;
   try{
     await muatAssignedMap();
