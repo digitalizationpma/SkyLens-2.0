@@ -8334,7 +8334,7 @@ async function djMuat(paksa){
     var dep = djDepo();
     var a = await sb.from('lapor_jalan').select('*').in('depot', dep).gte('waktu', new Date(Date.now() - 60 * 864e5).toISOString()).order('waktu', {ascending: false}).limit(1000);
     if(!a.error) DJ.lap = a.data || [];
-    var b = await sb.from('kunjungan_ulang').select('id,kode_salesman,depot,key_petak,nama_toko,ukuran_toko,foto_url,alasan,jadwal,kunjungan_ke,status,temuan_terakhir,kunjungan_terakhir,ditutup,dibuat,lat,lon').in('depot', dep).or('status.eq.buka,ditutup.gte.' + new Date(Date.now() - 30 * 864e5).toISOString()).limit(5000);
+    var b = await djAmbilKU(dep);   // v39: per halaman (maks 1.000/permintaan)
     if(!b.error) DJ.ku = b.data || [];
     DJ.muatT = Date.now();
     djKoreksiSegarkan();
@@ -8482,6 +8482,17 @@ setTimeout(function(){ try{ if(SB_SIAP && (AUTH_PROFIL || SA_UNLOCK)) djMuat(tru
    - Kartu samping lapor jalan: rantai BM -> RBM -> SA dengan jumlah, daftar laporan bisa dibuka/tutup.
    - Terang & gelap ikut tema dashboard (data-theme). */
 djDepo = function(){ try{ var d = depoDalamScope(); return d && d.length ? d : depoKeys(); }catch(e){ return depoKeys(); } };
+async function djAmbilKU(dep){   // v39: PostgREST maks 1.000 baris per permintaan -> ambil per halaman
+  var semua = [], kol = 'id,kode_salesman,depot,key_petak,nama_toko,ukuran_toko,foto_url,alasan,jadwal,kunjungan_ke,status,temuan_terakhir,kunjungan_terakhir,ditutup,dibuat,lat,lon';
+  var batas = new Date(Date.now() - 30 * 864e5).toISOString();
+  for(var i = 0; i < 20; i++){
+    var r = await sb.from('kunjungan_ulang').select(kol).in('depot', dep).or('status.eq.buka,ditutup.gte.' + batas).order('id', {ascending: true}).range(i * 1000, i * 1000 + 999);
+    if(r.error) return {error: r.error, data: semua};
+    semua = semua.concat(r.data || []);
+    if(!r.data || r.data.length < 1000) break;
+  }
+  return {error: null, data: semua};
+}
 DJ.depo = 'semua'; DJ.semuaKartu = false; DJ.tabel = false; DJ.lapBuka = null; DJ.hist = {}; DJ.laci = null; DJ.laciF = 'perlu';
 var DJ_ALASAN = {stok_ada: 'Stok masih ada', pemilik_tidak_ada: 'Pemilik tidak ada', '1_minggu': '1 minggu lagi', '2_minggu': '2 minggu lagi'};
 var DJ_HASIL = {noo: ['Jadi NOO', 'ok'], tidak_tertarik: ['Tidak tertarik', 'no'], tutup_otomatis: ['Ditutup otomatis (3x)', 'no'], dicover: ['Sudah dicover', 'ok']};
@@ -8525,6 +8536,9 @@ var DJ_BLN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Ok
 .dj-fil{display:flex;flex-wrap:wrap;gap:8px}
 .dj-fil button{border:1px solid var(--dj-line);background:var(--dj-surf);color:var(--dj-tx2);border-radius:999px;height:40px;padding:0 14px;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
 .dj-fil button[aria-pressed="true"]{background:var(--dj-tx);border-color:var(--dj-tx);color:var(--dj-bg)}
+.dj-sel{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--dj-tx2);font-size:14px}
+.dj-sel select{height:44px;min-width:240px;border:1px solid var(--dj-line);background:var(--dj-surf);color:var(--dj-tx);border-radius:999px;padding:0 16px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer}
+.dj-sel select:focus-visible{outline:3px solid var(--dj-acc);outline-offset:2px}
 .dj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
 .dj-card{background:var(--dj-surf);border:1px solid var(--dj-line);border-radius:22px;padding:20px;cursor:pointer;text-align:left;font:inherit;color:var(--dj-tx);display:flex;flex-direction:column;gap:14px;transition:border-color .15s,transform .15s,box-shadow .15s}
 .dj-card:hover{border-color:var(--dj-acc);transform:translateY(-2px);box-shadow:var(--shadow2)}
@@ -8636,7 +8650,8 @@ function djRender(){
   var urut = rows.filter(function(r){ return r.perlu > 0; }).sort(function(a, b){ return (b.perlu - a.perlu) || (b.lewat - a.lewat) || (b.hari - a.hari) || String(namaSalesDari(a.kode)).localeCompare(String(namaSalesDari(b.kode))); });
   var maks = urut.length ? urut[0].perlu : 1, BATAS = 12;
   h += '<div class="dj-head"><div><h2>Sales dengan toko kunjungi ulang</h2><p>Diurutkan dari toko terbanyak. Ketuk kartu untuk melihat detail tiap toko.</p></div>' +
-    (depos.length > 1 ? '<div class="dj-fil" role="group" aria-label="Filter depo">' + ['semua'].concat(depos).map(function(d){ return '<button type="button" aria-pressed="' + (DJ.depo === d) + '" onclick="DJ.depo=' + esc(JSON.stringify(d)) + ';DJ.semuaKartu=false;djRender()">' + (d === 'semua' ? 'Semua depo' : esc(djDepoPendek(d))) + '</button>'; }).join('') + '</div>' : '') + '</div>';
+    (depos.length > 8 ? '<label class="dj-sel"><span>Depo</span><select onchange="DJ.depo=this.value;DJ.semuaKartu=false;djRender()">' + ['semua'].concat(depos).map(function(d){ var ps = semua.filter(function(r){ return (r.depot || '-') === d; }).reduce(function(a, r){ return a + r.perlu; }, 0); return '<option value="' + esc(d) + '"' + (DJ.depo === d ? ' selected' : '') + '>' + (d === 'semua' ? 'Semua depo (' + depos.length + ')' : esc(djDepoPendek(d)) + ' · ' + ps + ' toko') + '</option>'; }).join('') + '</select></label>' :
+     depos.length > 1 ? '<div class="dj-fil" role="group" aria-label="Filter depo">' + ['semua'].concat(depos).map(function(d){ return '<button type="button" aria-pressed="' + (DJ.depo === d) + '" onclick="DJ.depo=' + esc(JSON.stringify(d)) + ';DJ.semuaKartu=false;djRender()">' + (d === 'semua' ? 'Semua depo' : esc(djDepoPendek(d))) + '</button>'; }).join('') + '</div>' : '') + '</div>';
   if(!urut.length) h += '<div class="dj-empty">Belum ada toko yang perlu dikunjungi ulang di sini.</div>';
   else h += '<div class="dj-grid">' + (DJ.semuaKartu ? urut : urut.slice(0, BATAS)).map(function(r, i){
     var nm = namaSalesDari(r.kode);
