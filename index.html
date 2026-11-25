@@ -8502,20 +8502,20 @@ var DJ_BLN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Ok
 (function(){
   var css = `
 #view-lapangan>.pgh{display:none}
-#djIsi,.dj-ov{--dj-bg:#F3F4F8;--dj-surf:#FFFFFF;--dj-surf2:#F4F6FB;--dj-line:#E0E4EE;--dj-tx:#121A33;--dj-tx2:#44506F;--dj-tx3:#5C6886;--dj-today:#5B3FE0;--dj-late:#C62835;--dj-sched:#4A5A85;--dj-tint:#FDECEE;--dj-hero:#1F2C4F;--dj-acc:#FF7A1A;--dj-on:#1A1206;--dj-okb:#E6F4F1;--dj-okc:#0B6B5F;--dj-pub:#EFEBFE;--dj-puc:#5B3FE0}
-:root[data-theme="dark"] #djIsi,:root[data-theme="dark"] .dj-ov{--dj-bg:#0C1224;--dj-surf:#131B33;--dj-surf2:#1A2440;--dj-line:#26314F;--dj-tx:#F2F4FA;--dj-tx2:#B4BED8;--dj-tx3:#8995B5;--dj-today:#9C8CFF;--dj-late:#FF7474;--dj-sched:#93A4CE;--dj-tint:rgba(255,116,116,.12);--dj-hero:#1B1530;--dj-acc:#FF7A1A;--dj-on:#1A1206;--dj-okb:rgba(45,212,191,.13);--dj-okc:#7EE0D0;--dj-pub:rgba(156,140,255,.15);--dj-puc:#B8ACFF}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) #djIsi,:root:not([data-theme="light"]) .dj-ov{--dj-bg:#0C1224;--dj-surf:#131B33;--dj-surf2:#1A2440;--dj-line:#26314F;--dj-tx:#F2F4FA;--dj-tx2:#B4BED8;--dj-tx3:#8995B5;--dj-today:#9C8CFF;--dj-late:#FF7474;--dj-sched:#93A4CE;--dj-tint:rgba(255,116,116,.12);--dj-hero:#1B1530;--dj-acc:#FF7A1A;--dj-on:#1A1206;--dj-okb:rgba(45,212,191,.13);--dj-okc:#7EE0D0;--dj-pub:rgba(156,140,255,.15);--dj-puc:#B8ACFF}}
+#djIsi,.dj-ov{--dj-bg:#F3F4F8;--dj-surf:#FFFFFF;--dj-surf2:#F4F6FB;--dj-line:#E0E4EE;--dj-tx:#121A33;--dj-tx2:#44506F;--dj-tx3:#5C6886;--dj-today:#5B3FE0;--dj-late:#C62835;--dj-sched:#4A5A85;--dj-tint:#FDECEE;--dj-hero:#1F2C4F;--dj-herobg:#1F2C4F;--dj-hem:#FF8A8A;--dj-heb:#FFB98A;--dj-hsub:#C9D0E4;--dj-hpill:rgba(255,255,255,.08);--dj-hpillb:rgba(255,255,255,.14);--dj-acc:#FF7A1A;--dj-on:#1A1206;--dj-okb:#E6F4F1;--dj-okc:#0B6B5F;--dj-pub:#EFEBFE;--dj-puc:#5B3FE0}
+:root[data-theme="dark"] #djIsi,:root[data-theme="dark"] .dj-ov{--dj-bg:#0C1224;--dj-surf:#131B33;--dj-surf2:#1A2440;--dj-line:#26314F;--dj-tx:#F2F4FA;--dj-tx2:#B4BED8;--dj-tx3:#8995B5;--dj-today:#9C8CFF;--dj-late:#FF7474;--dj-sched:#93A4CE;--dj-tint:rgba(255,116,116,.12);--dj-hero:#1B1530;--dj-herobg:linear-gradient(145deg,#D95A0B,#B3410A);--dj-hem:#FFFFFF;--dj-heb:#FFE9D6;--dj-hsub:#FFF3EA;--dj-hpill:rgba(255,255,255,.16);--dj-hpillb:rgba(255,255,255,.28);--dj-acc:#FF7A1A;--dj-on:#1A1206;--dj-okb:rgba(45,212,191,.13);--dj-okc:#7EE0D0;--dj-pub:rgba(156,140,255,.15);--dj-puc:#B8ACFF}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) #djIsi,:root:not([data-theme="light"]) .dj-ov{--dj-bg:#0C1224;--dj-surf:#131B33;--dj-surf2:#1A2440;--dj-line:#26314F;--dj-tx:#F2F4FA;--dj-tx2:#B4BED8;--dj-tx3:#8995B5;--dj-today:#9C8CFF;--dj-late:#FF7474;--dj-sched:#93A4CE;--dj-tint:rgba(255,116,116,.12);--dj-hero:#1B1530;--dj-herobg:linear-gradient(145deg,#D95A0B,#B3410A);--dj-hem:#FFFFFF;--dj-heb:#FFE9D6;--dj-hsub:#FFF3EA;--dj-hpill:rgba(255,255,255,.16);--dj-hpillb:rgba(255,255,255,.28);--dj-acc:#FF7A1A;--dj-on:#1A1206;--dj-okb:rgba(45,212,191,.13);--dj-okc:#7EE0D0;--dj-pub:rgba(156,140,255,.15);--dj-puc:#B8ACFF}}
 
 .dj-top{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;align-items:stretch}
 @media (max-width:1100px){.dj-top{grid-template-columns:1fr}}
-.dj-hero{background:var(--dj-hero);color:#F6F7FB;border-radius:26px;padding:32px 36px;display:flex;flex-direction:column;gap:18px}
+.dj-hero{background:var(--dj-herobg);color:#F6F7FB;border-radius:26px;padding:32px 36px;display:flex;flex-direction:column;gap:18px}
 @media (max-width:640px){.dj-hero{padding:24px 20px;border-radius:18px}}
-.dj-eb{color:#FFB98A;font-weight:800;letter-spacing:.12em;font-size:13px;text-transform:uppercase}
+.dj-eb{color:var(--dj-heb);font-weight:800;letter-spacing:.12em;font-size:13px;text-transform:uppercase}
 .dj-h{font-size:clamp(30px,3.6vw,46px);font-weight:800;letter-spacing:-.03em;line-height:1.08;margin:0;color:#fff}
-.dj-h em{font-style:normal;color:#FF8A8A}
-.dj-sub{color:#C9D0E4;max-width:620px;font-size:17px;line-height:1.5;margin:0}
+.dj-h em{font-style:normal;color:var(--dj-hem)}
+.dj-sub{color:var(--dj-hsub);max-width:620px;font-size:17px;line-height:1.5;margin:0}
 .dj-pills{display:flex;flex-wrap:wrap;gap:10px}
-.dj-pill{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.08);border-radius:14px;padding:10px 16px;display:flex;align-items:baseline;gap:8px;color:#C9D0E4;font-size:14px}
+.dj-pill{border:1px solid var(--dj-hpillb);background:var(--dj-hpill);border-radius:14px;padding:10px 16px;display:flex;align-items:baseline;gap:8px;color:var(--dj-hsub);font-size:14px}
 .dj-pill b{font-size:22px;color:#fff;font-weight:800;letter-spacing:-.02em}
 .dj-side{background:var(--dj-surf);border:1px solid var(--dj-line);border-radius:26px;padding:26px;display:flex;flex-direction:column;gap:14px}
 .dj-side h3{margin:0;font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--dj-tx)}
@@ -8575,6 +8575,8 @@ var DJ_BLN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Ok
 @media (max-width:560px){.dj-toko{flex-direction:column}}
 .dj-foto{width:128px;height:128px;border-radius:14px;object-fit:cover;background:var(--dj-surf2);border:1px solid var(--dj-line);flex:none;cursor:zoom-in;display:flex;align-items:center;justify-content:center;color:var(--dj-tx2);font-size:12px}
 .dj-ti{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.dj-pot{display:inline-flex;align-items:baseline;gap:6px;background:var(--dj-surf2);border:1px solid var(--dj-line);border-radius:999px;padding:4px 12px;font-size:13px;color:var(--dj-tx2);white-space:nowrap}
+.dj-pot b{font-size:14px;font-weight:800;color:var(--dj-tx)}
 .dj-ti h4{margin:0;font-size:17px;font-weight:800;color:var(--dj-tx)}
 .dj-dl{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 14px;font-size:13.5px;margin:0}
 .dj-dl dt{color:var(--dj-tx2);font-size:12px;font-weight:600}
@@ -8714,7 +8716,7 @@ async function djMuatRiwayat(kode){
   DJ.hist[kode] = {muat: true, by: {}};
   if(!ids.length || !SB_SIAP){ DJ.hist[kode].muat = false; djLaciRender(); return; }
   try{
-    var by = {}, kol = 'id,tanggal,status_tindak_lanjut,jadwal_kunjung_lagi,jadwal_ulang,ulang_dari,jarak_ulang_m,foto_url,nominal_order,catatan,alasan_tidak_tertarik';
+    var by = {}, kol = 'id,tanggal,status_tindak_lanjut,jadwal_kunjung_lagi,jadwal_ulang,ulang_dari,jarak_ulang_m,foto_url,nominal_order,catatan,alasan_tidak_tertarik,rata_belanja_nabati';
     for(var i = 0; i < ids.length; i += 60){
       var bag = ids.slice(i, i + 60).join(',');
       var r = await sb.from('temuan_pilot').select(kol).or('id.in.(' + bag + '),ulang_dari.in.(' + bag + ')').order('tanggal', {ascending: true}).limit(1000);
@@ -8752,6 +8754,11 @@ function djLaciRender(){
   var dr = o.querySelector('.dj-dr'); if(dr) dr.scrollTop = sc;
   if(!sc){ var x = o.querySelector('.dj-x'); if(x) try{ x.focus({preventScroll: true}); }catch(e){} }
 }
+function djRp(n){ n = Number(n); if(!isFinite(n) || n <= 0) return null; return 'Rp ' + Math.round(n).toLocaleString('id-ID'); }
+function djPotensi(t){
+  var r = t && djRp(t.rata_belanja_nabati);
+  return r ? '<span class="dj-pot" title="Rata-rata belanja Nabati per bulan yang disebut pemilik toko">Potensi order <b>' + r + '</b></span>' : '<span class="dj-pot" title="Pemilik toko belum menyebut rata-rata belanja Nabati">Potensi order <b>belum diisi</b></span>';
+}
 function djTokoHtml(k, s, H){
   var foto = k.foto_url ? '<img class="dj-foto" src="' + esc(k.foto_url) + '" alt="Foto toko ' + esc(k.nama_toko || '') + '" loading="lazy" onclick="bukaFoto(this.src)" onerror="this.outerHTML=\'<div class=&quot;dj-foto&quot;>Foto tidak ada</div>\'">' : '<div class="dj-foto">Belum ada foto</div>';
   var ri = (H.by && H.by[k.id]) || [];
@@ -8776,7 +8783,8 @@ function djTokoHtml(k, s, H){
     return '<div>' + (t.foto_url ? '<img src="' + esc(t.foto_url) + '" alt="Foto kunjungan" loading="lazy" onclick="bukaFoto(this.src)" onerror="this.remove()">' : '') + '<span><b>' + djWaktu(t.tanggal) + '</b> · ' + (i === 0 && !t.ulang_dari ? 'Temuan pertama' : 'Kunjungan ulang') + ' · ' + esc(hasil) + (ket.length ? '<small>' + esc(ket.join(' · ')) + '</small>' : '') + '</span></div>';
   }).join('') + '</div>';
   else if(H.err) tl = '<div class="muted" style="font-size:13px">Riwayat kunjungan belum bisa dimuat.</div>';
-  return '<article class="dj-toko">' + foto + '<div class="dj-ti"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><h4>' + esc(k.nama_toko || 'Toko tanpa nama') + '</h4><span class="dj-tag ' + s.c + '">' + esc(s.t) + '</span></div>' +
+  var pot = H.muat ? '<span class="dj-pot" title="Rata-rata belanja Nabati per bulan yang disebut pemilik toko">Potensi order <b>…</b></span>' : djPotensi(ri.filter(function(t){ return !t.ulang_dari; })[0] || ri[0]);
+  return '<article class="dj-toko">' + foto + '<div class="dj-ti"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><h4>' + esc(k.nama_toko || 'Toko tanpa nama') + '</h4>' + pot + '<span class="dj-tag ' + s.c + '">' + esc(s.t) + '</span></div>' +
     '<dl class="dj-dl">' + dl.map(function(x){ return '<div><dt>' + x[0] + '</dt><dd>' + esc(x[1]) + '</dd></div>'; }).join('') + '</dl>' + tl +
     '<div class="dj-btns">' + (k.lat && k.lon ? '<button type="button" class="dj-btn" onclick="djTokoDiPeta(' + Number(k.lat) + ',' + Number(k.lon) + ',' + esc(JSON.stringify(k.nama_toko || 'Toko')) + ')">Lihat di peta</button>' : '') +
     (k.foto_url ? '<button type="button" class="dj-btn" onclick="bukaFoto(' + esc(JSON.stringify(k.foto_url)) + ')">Perbesar foto</button>' : '') + '</div></div></article>';
