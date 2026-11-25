@@ -1630,6 +1630,12 @@ body.fit-peta .subnav{display:none!important}
     <div class="tray" id="tray" hidden><span id="trayTxt">Centang 2–10 temuan untuk Report WA</span><button class="btn btn-or" id="btnReportWA" type="button" disabled>Buat gambar laporan</button></div>
   </main>
 
+  <!-- ================= v38 KUNJUNGI & JALAN ================= -->
+  <main class="view" id="view-lapangan" hidden>
+    <header class="pgh"><div class="col"><h1 class="pg">Kunjungi ulang & lapor jalan</h1><span class="muted">Laporan kondisi jalan dari sales (persetujuan BM → RBM → Super Admin) dan pantauan toko yang perlu dikunjungi lagi.</span></div></header>
+    <div id="djIsi" class="col g16"></div>
+  </main>
+
   <!-- ================= RUTE ================= -->
   <main class="view" id="view-rute" hidden>
     <header class="pgh">
@@ -2422,10 +2428,10 @@ function jlTerapkan(rows){
   var ubah = 0;
   function tandai(i){
     if(J.cov[i]) return; J.cov[i] = 1; ubah++;
-    var rd = J.roads[J.proad[i]], o = J.perKey[J.pkey[i]];
-    if(o){ o.C[rd.k] = (o.C[rd.k] || 0) + J.plen[i]; if(rd.k === 'besar' || rd.k === 'besar?'){ var q = o.names[rd.nm]; if(q) q.C += J.plen[i]; } }
+    var rd = J.roads[J.proad[i]], o = J.perKey[J.pkey[i]], kk = (J.kx && J.kx[i] !== undefined) ? J.kx[i] : rd.k;   // v38: kelas setelah koreksi lapor jalan ('x' = tidak dihitung)
+    if(o && kk !== 'x'){ o.C[kk] = (o.C[kk] || 0) + J.plen[i]; if(kk === 'besar' || kk === 'besar?'){ var q = o.names[rd.nm]; if(q) q.C += J.plen[i]; } }
     var ka = J.kot[J.pkey[i]], kc = ka && ka[J.pcel[i]];
-    if(kc){ if(rd.k === 'besar' || rd.k === 'besar?') kc.bC += J.plen[i]; else if(rd.k === 'mobil') kc.mC += J.plen[i]; }
+    if(kc){ if(kk === 'besar' || kk === 'besar?') kc.bC += J.plen[i]; else if(kk === 'mobil') kc.mC += J.plen[i]; }
     if(J.twin && J.twin[i] >= 0) tandai(J.twin[i]);   // v33: sisi lain jalan bergaris ganda
   }
   var A = {
@@ -4644,7 +4650,7 @@ function switchTheme(t, e, el){
 }
 
 /* ---------- kerangka: tab & navigasi ---------- */
-var VIEWS = [['ringkasan','Ringkasan'],['peta','Peta'],['penugasan','Penugasan'],['kinerja','Kinerja'],['temuan','Temuan'],['rute','Rute'],['progress','Progress'],['admin','Super Admin'],['sales','Kelola sales']];
+var VIEWS = [['ringkasan','Ringkasan'],['peta','Peta'],['penugasan','Penugasan'],['kinerja','Kinerja'],['temuan','Temuan'],['rute','Rute'],['progress','Progress'],['admin','Super Admin'],['sales','Kelola sales'],['lapangan','Kunjungi & Jalan']];
 var VIEW = 'ringkasan';
 var MODE_UI = 'depo'; // depo | sa | sbx
 var SA_UNLOCK = false; // true setelah password Super Admin benar (membuka opsi Sandbox TESTING)
@@ -4658,7 +4664,7 @@ var LABEL_SUB = {ringkasan: 'Hari ini', kinerja: 'Kinerja sales', temuan: 'Temua
 var SUB_TERAKHIR = {};
 function grupDari(id){ for(var i = 0; i < GRUP_MENU.length; i++){ if(GRUP_MENU[i][2].indexOf(id) >= 0) return GRUP_MENU[i]; } return GRUP_MENU[0]; }
 function subTampil(g){ return g[2].filter(function(v){ return v !== 'admin' || SUPER_ADMIN; }); }
-var MENU_DATAR = [['peta', 'Peta'], ['ringkasan', 'Ringkasan'], ['kinerja', 'Kinerja Sales'], ['temuan', 'Temuan & Foto'], ['penugasan', 'Penugasan'], ['sales', 'Daftar Sales']];
+var MENU_DATAR = [['peta', 'Peta'], ['ringkasan', 'Ringkasan'], ['kinerja', 'Kinerja Sales'], ['temuan', 'Temuan & Foto'], ['lapangan', 'Kunjungi & Jalan'], ['penugasan', 'Penugasan'], ['sales', 'Daftar Sales']];
 /* v28: tombol Super Admin di header diganti Tutorial; saat mode Super Admin, tab Super Admin muncul di menu utama */
 function menuDatar(){ return SUPER_ADMIN ? MENU_DATAR.concat([['admin', 'Super Admin']]) : MENU_DATAR; }
 var TABS = {cur: -1, token: 0, busy: false, dots: null, ro: null};
@@ -4769,6 +4775,7 @@ function goView(id, opt){
   else if(id === 'progress') renderProgress();
   else if(id === 'admin') renderAdmin();
   else if(id === 'sales') rosterRender();
+  else if(id === 'lapangan' && typeof djRender === 'function') djRender();   // v38
 }
 function petaTampil(){
   setTimeout(function(){
@@ -8300,6 +8307,172 @@ function introMain(){
   if(/[?&]nointro\b/.test(location.search)){ it.hidden = true; return; }
   introMain();
 })();
+</script>
+<script>
+/* ===================== v38 (25 Nov 2026): menu "Kunjungi & Jalan" =====================
+   1) Lapor jalan dari sales: persetujuan berjenjang BM -> RBM -> Super Admin (wajib sampai SA, tanpa eskalasi otomatis).
+      Ruas yang sudah disetujui ikut mengubah hitungan kotak biru (sama dengan app sales).
+   2) Kunjungi ulang: per sales — hari ini / terlambat / terjadwal / sudah dikunjungi / jadi NOO. */
+var DJ = {lap: [], ku: [], muatT: 0, filter: 'saya', kx: [], kxT: 0, sedang: false, peta: null};
+var DJ_KAT = {tutup: 'Jalan tertutup / tak bisa dilewati', motor: 'Hanya muat motor (gang)', mobil: 'Muat 1 mobil', gudang: 'Area gudang / pabrik', tidakada: 'Jalan tidak ada di lapangan'};
+var DJ_ST = {menunggu_bm: ['Menunggu BM', '#FFF0E4', '#9A3A06'], menunggu_rbm: ['Menunggu RBM', '#FFF0E4', '#9A3A06'], menunggu_sa: ['Menunggu Super Admin', '#FFF0E4', '#9A3A06'], disetujui: ['Disetujui', '#E6F4F1', '#0B6B5F'], ditolak: ['Ditolak', '#FDECEC', '#B42318']};
+var DJ_KELAS = {B: 'Jalan besar', Q: 'Jalan besar', M: 'Jalan mobil', T: 'Gang motor'};
+function djPeran(){ return (AUTH_PROFIL && AUTH_PROFIL.peran) || (SA_UNLOCK ? 'SA' : (SCOPE ? SCOPE.peran : '')); }
+function djGiliranSaya(l){
+  var p = djPeran();
+  return (l.status === 'menunggu_bm' && p === 'BM') || (l.status === 'menunggu_rbm' && p === 'RBM') || (l.status === 'menunggu_sa' && p === 'SA');
+}
+function djDepo(){ var d = depoDalamScope(); return d && d.length ? d : depoKeys(); }
+function djKotak(i){ if(i == null) return '-'; var r = Math.floor(i / 4), c = i % 4; return 'ABCD'[3 - r] + (c + 1); }
+function djWaktu(s){ if(!s) return '-'; var d = new Date(Date.parse(s) + 7 * 3600e3); return d.getUTCDate() + ' ' + ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][d.getUTCMonth()] + ' ' + String(d.getUTCHours()).padStart(2, '0') + '.' + String(d.getUTCMinutes()).padStart(2, '0'); }
+function djHariIni(){ return new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10); }
+async function djMuat(paksa){
+  if(!SB_SIAP || DJ.sedang) return;
+  if(!paksa && Date.now() - DJ.muatT < 60000) return;
+  DJ.sedang = true;
+  try{
+    var dep = djDepo();
+    var a = await sb.from('lapor_jalan').select('*').in('depot', dep).gte('waktu', new Date(Date.now() - 60 * 864e5).toISOString()).order('waktu', {ascending: false}).limit(1000);
+    if(!a.error) DJ.lap = a.data || [];
+    var b = await sb.from('kunjungan_ulang').select('id,kode_salesman,depot,nama_toko,ukuran_toko,alasan,jadwal,kunjungan_ke,status,kunjungan_terakhir,ditutup,lat,lon').in('depot', dep).or('status.eq.buka,ditutup.gte.' + new Date(Date.now() - 30 * 864e5).toISOString()).limit(5000);
+    if(!b.error) DJ.ku = b.data || [];
+    DJ.muatT = Date.now();
+    djKoreksiSegarkan();
+  }catch(e){ console.warn('v38 muat', e); }
+  finally{ DJ.sedang = false; }
+  djBadge();
+  if(VIEW === 'lapangan') djRender();
+}
+function djBadge(){
+  var n = DJ.lap.filter(djGiliranSaya).length;
+  var b = document.querySelector('#tabs button[data-go="lapangan"]'); if(!b) return;
+  var t = 'Kunjungi & Jalan' + (n ? ' (' + n + ')' : ''); if(b.textContent !== t){ b.textContent = t; try{ tabsPlace(TABS.cur); }catch(e){} }
+}
+async function djPutuskan(id, setuju){
+  var alasan = null;
+  if(!setuju){ alasan = prompt('Alasan menolak laporan ini (wajib):', ''); if(alasan == null) return; if(!alasan.trim()){ toast('Alasan penolakan wajib diisi.'); return; } }
+  var r = await sb.rpc('putuskan_lapor_jalan', {p_id: id, p_setuju: !!setuju, p_alasan: alasan});
+  if(r.error){ toast('Gagal: ' + r.error.message); return; }
+  if(r.data && r.data.ok === false){ toast(r.data.error || 'Ditolak server'); }
+  else toast(setuju ? (r.data.status === 'disetujui' ? 'Disetujui final. Hitungan kotak ikut diperbarui.' : 'Disetujui, diteruskan ke tingkat berikutnya.') : 'Laporan ditolak.');
+  await djMuat(true);
+}
+function djLihatDiPeta(id){
+  var l = DJ.lap.filter(function(x){ return x.id === id; })[0]; if(!l || !Array.isArray(l.geom)) return;
+  goView('peta');
+  setTimeout(function(){
+    try{
+      if(DJ.peta) map.removeLayer(DJ.peta);
+      DJ.peta = L.layerGroup([L.polyline(l.geom, {color: '#FACC15', weight: 10, opacity: .95}), L.polyline(l.geom, {color: '#1F2C4F', weight: 3, opacity: .9, dashArray: '4 6'})]).addTo(map);
+      map.fitBounds(L.latLngBounds(l.geom), {maxZoom: 18, padding: [80, 80]});
+      toast((l.nama_jalan || 'Ruas') + ' · ' + (DJ_KAT[l.kategori] || l.kategori) + ' (garis kuning)');
+      setTimeout(function(){ if(DJ.peta){ try{ map.removeLayer(DJ.peta); }catch(e){} DJ.peta = null; } }, 60000);
+    }catch(e){}
+  }, 400);
+}
+function djRantai(l){
+  var urut = ['menunggu_bm', 'menunggu_rbm', 'menunggu_sa', 'disetujui'], pos = urut.indexOf(l.status);
+  var t = [['BM', l.bm_oleh, l.bm_waktu], ['RBM', l.rbm_oleh, l.rbm_waktu], ['Super Admin', l.sa_oleh, l.sa_waktu]];
+  var kode = ['BM', 'RBM', 'SA'];
+  return '<div class="row wrap g8" style="font-size:12px">' + t.map(function(x, i){
+    var w = '#9AA5BC', s = 'belum';
+    if(l.status === 'ditolak' && l.ditolak_peran === kode[i]){ w = '#B42318'; s = 'menolak'; }
+    else if(pos > i || (l.status === 'ditolak' && x[1] && l.ditolak_peran !== kode[i])){ w = '#0B6B5F'; s = 'setuju'; }
+    else if(pos === i){ w = '#B9480A'; s = 'giliran'; }
+    return '<span style="border:1.5px solid ' + w + ';color:' + w + ';border-radius:999px;padding:2px 9px;font-weight:700">' + x[0] + ' · ' + s + (x[1] ? ' (' + esc(x[1]) + (x[2] ? ', ' + djWaktu(x[2]) : '') + ')' : '') + '</span>';
+  }).join('<span class="muted">→</span>') + '</div>';
+}
+function djRender(){
+  var el = document.getElementById('djIsi'); if(!el) return;
+  if(!DJ.muatT){ el.innerHTML = '<div class="card pad muted">Memuat laporan jalan & kunjungi ulang…</div>'; djMuat(true); return; }
+  var peran = djPeran(), saya = DJ.lap.filter(djGiliranSaya), f = DJ.filter;
+  var daftar = f === 'saya' ? saya : (f === 'proses' ? DJ.lap.filter(function(l){ return /^menunggu/.test(l.status); }) : (f === 'disetujui' ? DJ.lap.filter(function(l){ return l.status === 'disetujui'; }) : (f === 'ditolak' ? DJ.lap.filter(function(l){ return l.status === 'ditolak'; }) : DJ.lap)));
+  var chip = function(k, t, n){ return '<button type="button" role="tab" aria-selected="' + (f === k) + '" onclick="DJ.filter=\'' + k + '\';djRender()">' + t + ' (' + n + ')</button>'; };
+  var h = '<section class="card pad col g12"><div class="row sp wrap g10"><div><h2>Lapor jalan dari sales</h2><span class="muted" style="font-size:13px">Disetujui berurutan BM → RBM → Super Admin. Ruas baru berubah di hitungan kotak setelah Super Admin menyetujui.' + (peran ? ' Kamu login sebagai <b>' + esc(peran) + '</b>.' : '') + '</span></div>' +
+    '<div class="row g8"><button class="btn btn-gh" type="button" onclick="djMuat(true)"><span data-ico="refresh"></span>Muat ulang</button></div></div>' +
+    '<div class="seg" role="tablist" aria-label="Filter laporan" style="flex-wrap:wrap;align-self:flex-start">' + chip('saya', 'Giliran saya', saya.length) + chip('proses', 'Sedang diproses', DJ.lap.filter(function(l){ return /^menunggu/.test(l.status); }).length) + chip('disetujui', 'Disetujui', DJ.lap.filter(function(l){ return l.status === 'disetujui'; }).length) + chip('ditolak', 'Ditolak', DJ.lap.filter(function(l){ return l.status === 'ditolak'; }).length) + chip('semua', 'Semua', DJ.lap.length) + '</div>';
+  if(!daftar.length) h += '<div class="muted" style="padding:16px 4px">' + (f === 'saya' ? 'Tidak ada laporan yang menunggu persetujuanmu.' : 'Belum ada laporan.') + '</div>';
+  h += '<div class="col g10">' + daftar.slice(0, 200).map(function(l){
+    var st = DJ_ST[l.status] || DJ_ST.menunggu_bm, giliran = djGiliranSaya(l);
+    return '<div class="card" style="padding:12px;display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap' + (giliran ? ';border:2px solid var(--or)' : '') + '">' +
+      (l.foto_url ? '<a href="' + esc(l.foto_url) + '" target="_blank" rel="noopener"><img src="' + esc(l.foto_url) + '" alt="Foto jalan" loading="lazy" style="width:120px;height:90px;object-fit:cover;border-radius:10px;background:#E3E7EE"></a>' : '') +
+      '<div class="col g6" style="flex:1;min-width:220px"><div class="row wrap g8" style="align-items:center"><b style="font-size:15px">' + esc(l.nama_jalan || 'Ruas jalan') + '</b><span style="background:' + st[1] + ';color:' + st[2] + ';border-radius:8px;padding:2px 8px;font-size:12px;font-weight:800">' + st[0] + '</span></div>' +
+      '<span style="font-size:13px"><b>' + esc(DJ_KAT[l.kategori] || l.kategori) + '</b> · ' + esc(DJ_KELAS[l.kelas] || 'Jalan') + ' · Kotak ' + djKotak(l.kotak) + ' · ±' + (l.panjang_m || 0) + ' m</span>' +
+      '<span class="muted" style="font-size:12.5px">' + esc(namaSalesDari(l.kode_salesman)) + ' (' + esc(l.kode_salesman) + ') · ' + esc(l.depot || '') + ' · ' + djWaktu(l.waktu) + ' · posisi ±' + (l.jarak_m == null ? '?' : l.jarak_m) + ' m dari ruas (GPS ±' + (l.akurasi == null ? '?' : l.akurasi) + ' m)' + (l.cara_pilih === 'ketuk' ? ' · ruas dipilih manual' : '') + '</span>' +
+      (l.catatan ? '<span style="font-size:13px">“' + esc(l.catatan) + '”</span>' : '') + djRantai(l) +
+      (l.status === 'ditolak' && l.alasan_tolak ? '<span style="font-size:12.5px;color:#B42318">Alasan ditolak: ' + esc(l.alasan_tolak) + '</span>' : '') + '</div>' +
+      '<div class="col g8" style="min-width:150px">' + (Array.isArray(l.geom) ? '<button class="btn btn-gh" type="button" onclick="djLihatDiPeta(\'' + l.id + '\')">Lihat di peta</button>' : '') +
+      (giliran ? '<button class="btn btn-or" type="button" onclick="djPutuskan(\'' + l.id + '\',true)">Setujui</button><button class="btn btn-gh" type="button" style="color:#B42318" onclick="djPutuskan(\'' + l.id + '\',false)">Tolak</button>' : '') + '</div></div>';
+  }).join('') + '</div></section>';
+  // ---- kunjungi ulang per sales ----
+  var hari = djHariIni(), per = {};
+  DJ.ku.forEach(function(k){
+    var p = per[k.kode_salesman] || (per[k.kode_salesman] = {kode: k.kode_salesman, depot: k.depot, hari: 0, telat: 0, nanti: 0, sudah: 0, noo: 0, tutup: 0, telatMax: 0});
+    if(k.status === 'buka'){
+      var j = String(k.jadwal || '').slice(0, 10);
+      if(j === hari) p.hari++; else if(j && j < hari){ p.telat++; p.telatMax = Math.max(p.telatMax, Math.round((Date.parse(hari) - Date.parse(j)) / 864e5)); } else p.nanti++;
+    } else { p.sudah++; if(k.status === 'noo') p.noo++; if(k.status === 'tutup_otomatis') p.tutup++; }
+  });
+  var rows = Object.keys(per).map(function(k){ return per[k]; }).sort(function(a, b){ return (b.telat - a.telat) || (b.hari - a.hari) || String(a.depot).localeCompare(String(b.depot)); });
+  var tot = rows.reduce(function(a, r){ a.hari += r.hari; a.telat += r.telat; a.nanti += r.nanti; a.sudah += r.sudah; a.noo += r.noo; return a; }, {hari: 0, telat: 0, nanti: 0, sudah: 0, noo: 0});
+  h += '<section class="card pad col g12" style="margin-top:16px"><div><h2>Kunjungi ulang</h2><span class="muted" style="font-size:13px">Toko "Nanti dikunjungi" dijadwalkan ulang otomatis di app: stok masih ada = +7 hari digeser ke hari rute, pemilik tidak ada = rute JKS berikutnya. Maks 3 kunjungan, "sudah dikunjungi" hanya kalau sales ≤ 50 m dari toko (100 m saat GPS lemah). 30 hari terakhir.</span></div>' +
+    '<div class="row wrap g10">' + [['Jadwal hari ini', tot.hari, '#6D28D9'], ['Terlambat', tot.telat, '#B42318'], ['Terjadwal nanti', tot.nanti, '#1F2C4F'], ['Sudah dikunjungi ulang', tot.sudah, '#0B6B5F'], ['Jadi NOO', tot.noo, '#E8620C']].map(function(x){
+      return '<div class="card" style="padding:10px 14px;min-width:130px"><div class="muted" style="font-size:12px;font-weight:700">' + x[0] + '</div><div style="font-size:26px;font-weight:800;color:' + x[2] + '">' + x[1].toLocaleString('id-ID') + '</div></div>'; }).join('') + '</div>' +
+    (rows.length ? '<div style="overflow:auto"><table class="dt"><thead><tr><th>Sales</th><th>Depo</th><th>Hari ini</th><th>Terlambat</th><th>Terjadwal</th><th>Sudah</th><th>Jadi NOO</th><th>Tutup (3x)</th></tr></thead><tbody>' + rows.map(function(r){
+      return '<tr><td>' + esc(namaSalesDari(r.kode)) + ' <span class="muted mono" style="font-size:11px">' + esc(r.kode) + '</span></td><td>' + esc(r.depot || '') + '</td><td>' + r.hari + '</td><td style="color:' + (r.telat ? '#B42318;font-weight:800' : 'inherit') + '">' + r.telat + (r.telatMax ? ' <span class="muted" style="font-weight:400">(maks ' + r.telatMax + ' hr)</span>' : '') + '</td><td>' + r.nanti + '</td><td>' + r.sudah + '</td><td>' + r.noo + '</td><td>' + r.tutup + '</td></tr>';
+    }).join('') + '</tbody></table></div>' : '<div class="muted">Belum ada data kunjungi ulang di cakupanmu.</div>') + '</section>';
+  el.innerHTML = h;
+  try{ lapIkon(el); }catch(e){}
+}
+/* ---- koreksi kotak biru dari lapor jalan yang SUDAH disetujui (sama dengan app sales: lj25Kat) ---- */
+function djJarakSeg(la, lo, a, b){
+  var kx = 111320 * Math.cos(la * Math.PI / 180), ax = (a[1] - lo) * kx, ay = (a[0] - la) * 110574, vx = (b[1] - a[1]) * kx, vy = (b[0] - a[0]) * 110574, ll = vx * vx + vy * vy;
+  var s = ll ? Math.max(0, Math.min(1, -(ax * vx + ay * vy) / ll)) : 0, ex = ax + vx * s, ey = ay + vy * s; return Math.sqrt(ex * ex + ey * ey);
+}
+function djKelasDash(k){ return k === 'B' ? 'besar' : (k === 'Q' ? 'besar?' : (k === 'M' ? 'mobil' : (k === 'T' ? 'motor' : null))); }
+function djKoreksiTerap(J){
+  if(!J || !DJ.kx.length) return 0;
+  if(!J.kx) J.kx = {};
+  var n = 0, perKey = {};
+  DJ.kx.forEach(function(r){ if(r.key_petak != null && Array.isArray(r.geom)) (perKey[r.key_petak] = perKey[r.key_petak] || []).push(r); });
+  for(var s = 0; s < J.pa.length; s++){
+    if(J.kx[s] !== undefined) continue;
+    var arr = perKey[J.pkey[s]]; if(!arr) continue;
+    var rd = J.roads[J.proad[s]]; if(rd.k === 'tol') continue;
+    var m0 = (J.pa[s] + J.pc[s]) / 2, m1 = (J.pb[s] + J.pd[s]) / 2;
+    for(var u = 0; u < arr.length; u++){
+      var r = arr[u], kd = djKelasDash(r.kelas);
+      if(r.kotak != null && r.kotak !== J.pcel[s]) continue;
+      if(kd && kd !== rd.k && !((kd === 'besar' || kd === 'besar?') && (rd.k === 'besar' || rd.k === 'besar?'))) continue;
+      var g = r.geom, bd = 1e9, bi = 0;
+      for(var i = 0; i + 1 < g.length; i++){ var d = djJarakSeg(m0, m1, g[i], g[i + 1]); if(d < bd){ bd = d; bi = i; } }
+      if(bd > 8) continue;
+      var a = g[bi], b = g[bi + 1] || g[bi], kx = 111320 * Math.cos(a[0] * Math.PI / 180), ang = ((Math.atan2((b[0] - a[0]) * 110574, (b[1] - a[1]) * kx) * 180 / Math.PI) % 180 + 180) % 180, da = Math.abs(ang - J.pang[s]); if(da > 90) da = 180 - da;
+      if(da > 25) continue;
+      var baru = (r.kategori === 'tutup' || r.kategori === 'tidakada' || r.kategori === 'gudang') ? 'x' : (r.kategori === 'motor' ? 'motor' : (r.kategori === 'mobil' && (rd.k === 'besar' || rd.k === 'besar?') ? 'mobil' : rd.k));
+      if(baru === rd.k) break;
+      J.kx[s] = baru; n++;
+      var len = J.plen[s], key = J.pkey[s], cov = !!J.cov[s], o = J.perKey[key], kc = J.kot[key] && J.kot[key][J.pcel[s]];
+      if(o){ o.L[rd.k] -= len; if(cov) o.C[rd.k] -= len; if(baru !== 'x'){ o.L[baru] = (o.L[baru] || 0) + len; if(cov) o.C[baru] = (o.C[baru] || 0) + len; }
+        if(rd.k === 'besar' || rd.k === 'besar?'){ var q = o.names[rd.nm]; if(q){ q.L -= len; if(cov) q.C -= len; } } }
+      if(kc){ if(rd.k === 'besar' || rd.k === 'besar?'){ kc.bL -= len; if(cov) kc.bC -= len; } else if(rd.k === 'mobil'){ kc.mL -= len; if(cov) kc.mC -= len; }
+        if(baru === 'mobil'){ kc.mL += len; if(cov) kc.mC += len; } }
+      break;
+    }
+  }
+  return n;
+}
+function djKoreksiSegarkan(){
+  var baru = DJ.lap.filter(function(l){ return l.status === 'disetujui' && Array.isArray(l.geom); });
+  var sig = baru.map(function(l){ return l.id; }).sort().join(',');
+  if(sig === DJ.kxSig) return; DJ.kxSig = sig; DJ.kx = baru;
+  try{ if(typeof JL !== 'undefined' && JL && djKoreksiTerap(JL) && typeof perbaruiJalan === 'function') perbaruiJalan(); }catch(e){ console.warn(e); }
+}
+var jlSiapkanAsli38 = jlSiapkan;
+jlSiapkan = function(data){ var J = jlSiapkanAsli38(data); try{ djKoreksiTerap(J); }catch(e){ console.warn('koreksi jalan', e); } return J; };
+setInterval(function(){ try{ if(SB_SIAP && (AUTH_PROFIL || SA_UNLOCK)) djMuat(false); }catch(e){} }, 120000);
+setTimeout(function(){ try{ if(SB_SIAP && (AUTH_PROFIL || SA_UNLOCK)) djMuat(true); }catch(e){} }, 8000);
+
 </script>
 </body>
 </html>
