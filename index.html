@@ -8803,5 +8803,361 @@ function djTokoDiPeta(lat, lon, nama){
 }
 
 </script>
+<script>
+/* ===================== v40 (26 Nov 2026): angka di kartu hero bisa diklik =====================
+   Lima angka (hari ini / lewat jadwal / terjadwal nanti / sudah dikunjungi ulang / jadi NOO) jadi tombol.
+   Diklik -> laci dari kanan: tab kelima daftar, filter depo, urutan, Unduh Excel.
+   - Hari ini / Lewat jadwal / Terjadwal: toko dikelompokkan per sales, foto + potensi order + alasan + Lihat di peta.
+   - Sudah dikunjungi: timeline kunjungan per toko (dari temuan_pilot).
+   - Jadi NOO: kartu sebelum/sesudah dengan foto kunjungan 1 vs 2, nominal orderan, potensi, lama hari.
+   Desain & warna sama dengan mockup E (terang & gelap ikut tema dashboard). */
+DJ.heroTab = null; DJ.heroDepo = 'semua'; DJ.heroUrut = {}; DJ.heroSemua = {}; DJ.heroBuka = {}; DJ.pot = {}; DJ.potSdg = {}; DJ.hh = {};
+
+(function(){
+  var css = `
+.dh-pills{display:flex;flex-wrap:wrap;gap:10px}
+.dh-pl{display:inline-flex;align-items:center;gap:8px;min-height:48px;background:var(--dj-hpill);border:2px solid var(--dj-hpillb);border-radius:14px;padding:8px 14px 8px 16px;color:var(--dj-hsub);font:inherit;font-size:14px;cursor:pointer;transition:background .15s}
+.dh-pl b{font-size:22px;font-weight:800;color:#fff;letter-spacing:-.02em}
+.dh-pl:hover{background:rgba(255,255,255,.24)}
+.dh-pl:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.dh-pl svg{flex:none}
+.dh-eb{font-size:12.5px;font-weight:800;letter-spacing:.1em;color:var(--dj-tx3);text-transform:uppercase}
+.dh-t{margin:0;font-size:22px;font-weight:800;letter-spacing:-.015em;color:var(--dj-tx)}
+.dh-s{font-size:14px;color:var(--dj-tx2)}
+.dh-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.dh-tabs button{height:36px;padding:0 13px;border-radius:99px;font:inherit;font-size:13px;font-weight:700;border:1px solid var(--dj-line);background:var(--dj-surf);color:var(--dj-tx);cursor:pointer}
+.dh-tabs button[aria-pressed="true"]{background:var(--dj-tx);color:var(--dj-bg);border-color:var(--dj-tx)}
+.dh-ctl{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.dh-ctl label{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:var(--dj-tx2)}
+.dh-ctl select{height:40px;min-width:180px;max-width:100%;border:1px solid var(--dj-line);background:var(--dj-surf);color:var(--dj-tx);border-radius:99px;padding:0 14px;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.dh-ctl select:focus-visible,.dh-ctl button:focus-visible,.dh-tabs button:focus-visible,.dh-rbtn:focus-visible,.dh-more:focus-visible{outline:2px solid var(--dj-acc);outline-offset:2px}
+.dh-xls{margin-left:auto;height:40px;padding:0 16px;border-radius:99px;border:1px solid var(--dj-line);background:var(--dj-surf);color:var(--dj-tx);font:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
+.dh-xls:hover,.dh-more:hover,.dh-rbtn:hover{border-color:var(--dj-acc)}
+.dh-body{padding:18px 22px 40px;display:flex;flex-direction:column;gap:18px}
+.dh-note{margin:0;font-size:14px;color:var(--dj-tx2)}
+.dh-grp{display:flex;flex-direction:column;gap:10px}
+.dh-gh{display:flex;align-items:center;gap:10px}
+.dh-av{flex:none;width:34px;height:34px;border-radius:99px;background:var(--dj-surf2);border:1px solid var(--dj-line);color:var(--dj-tx2);font-size:12.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+.dh-gn{flex:1;min-width:0;display:flex;flex-direction:column}
+.dh-gn b{font-size:15px;color:var(--dj-tx);text-transform:capitalize}
+.dh-gn span{font-size:13px;color:var(--dj-tx3)}
+.dh-cnt{font-size:13px;font-weight:800;border-radius:99px;padding:4px 11px;background:var(--dj-surf2);border:1px solid var(--dj-line);color:var(--dj-tx);white-space:nowrap}
+.dh-row{background:var(--dj-surf);border:1px solid var(--dj-line);border-radius:16px;padding:12px;display:flex;gap:14px;align-items:center}
+@media (max-width:560px){.dh-row{flex-wrap:wrap}}
+.dh-th{flex:none;position:relative;width:64px;height:64px;border-radius:12px;background:var(--dj-surf2);border:1px solid var(--dj-line);color:var(--dj-tx3);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.dh-th img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;cursor:zoom-in}
+.dh-ri{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.dh-rt{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.dh-rt b{font-size:15.5px;color:var(--dj-tx)}
+.dh-tg{font-size:12.5px;font-weight:800;border-radius:99px;padding:3px 10px;white-space:nowrap}
+.dh-tg.hari{background:var(--dj-pub);color:var(--dj-today)}
+.dh-tg.lewat{background:var(--dj-tint);color:var(--dj-late)}
+.dh-tg.nanti{background:var(--dj-surf2);color:var(--dj-tx2)}
+.dh-tg.ok{background:var(--dj-okb);color:var(--dj-okc)}
+.dh-tg.no{background:var(--dj-surf2);color:var(--dj-tx2)}
+.dh-ket{font-size:13px;color:var(--dj-tx2)}
+.dh-rbtn{flex:none;height:38px;padding:0 13px;border-radius:10px;border:1px solid var(--dj-line);background:var(--dj-surf);color:var(--dj-tx);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.dh-more{align-self:center;height:46px;padding:0 22px;border-radius:99px;border:1px solid var(--dj-line);background:var(--dj-surf);color:var(--dj-tx);font:inherit;font-size:14.5px;font-weight:700;cursor:pointer}
+.dh-more.s{height:38px;font-size:13.5px;padding:0 16px}
+.dh-sc{background:var(--dj-surf);border:1px solid var(--dj-line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.dh-sc ol{list-style:none;margin:0 0 0 6px;padding:0 0 0 16px;border-left:2px solid var(--dj-line);display:flex;flex-direction:column;gap:12px}
+.dh-sc li{position:relative;display:flex;gap:12px;align-items:flex-start}
+.dh-sc li>i{position:absolute;left:-23px;top:6px;width:12px;height:12px;border-radius:99px;border:2px solid var(--dj-surf)}
+.dh-sc .dh-th{width:52px;height:52px;border-radius:10px}
+.dh-tx{display:flex;flex-direction:column;gap:2px;font-size:14px;color:var(--dj-tx);min-width:0}
+.dh-tx small{font-size:13px;color:var(--dj-tx2)}
+.dh-noo{background:var(--dj-surf);border:1px solid var(--dj-line);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:16px}
+.dh-ba{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:560px){.dh-ba{grid-template-columns:1fr}}
+.dh-bc{display:flex;flex-direction:column;gap:8px;min-width:0}
+.dh-ph{position:relative;height:170px;border-radius:14px;background:var(--dj-surf2);border:1px solid var(--dj-line);display:flex;align-items:center;justify-content:center;color:var(--dj-tx3);font-size:13px;font-weight:700;overflow:hidden}
+.dh-ph.ok{border:2px solid var(--dj-okc)}
+.dh-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;cursor:zoom-in}
+.dh-bl{font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--dj-tx3);text-transform:uppercase}
+.dh-bl.ok{color:var(--dj-okc)}
+.dh-kp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:560px){.dh-kp{grid-template-columns:1fr}}
+.dh-kp div{background:var(--dj-surf2);border:1px solid var(--dj-line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.dh-kp span{font-size:12.5px;color:var(--dj-tx2)}
+.dh-kp b{font-size:20px;color:var(--dj-tx)}
+.dh-bs{display:flex;gap:8px;flex-wrap:wrap}
+.dh-bs button{height:40px;padding:0 14px;border-radius:10px;border:1px solid var(--dj-line);background:var(--dj-surf);color:var(--dj-tx);font:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
+.dh-bs button:hover{border-color:var(--dj-acc)}
+`;
+  var st = document.createElement('style'); st.id = 'djCss40'; st.textContent = css; document.head.appendChild(st);
+})();
+
+var DJ_HERO = {
+  hari:  {tab: 'Hari ini', k: 'jadwal hari ini'},
+  lewat: {tab: 'Lewat jadwal', k: 'lewat jadwal'},
+  nanti: {tab: 'Terjadwal', k: 'terjadwal nanti'},
+  sudah: {tab: 'Sudah dikunjungi', k: 'sudah dikunjungi ulang'},
+  noo:   {tab: 'Jadi NOO', k: 'jadi NOO'}
+};
+var DJ_HERO_URUT = {
+  hari:  [['terbanyak', 'Toko terbanyak'], ['nama', 'Nama sales A–Z']],
+  lewat: [['lama', 'Paling lama lewat'], ['terbanyak', 'Toko terbanyak'], ['nama', 'Nama sales A–Z']],
+  nanti: [['dekat', 'Jadwal terdekat'], ['terbanyak', 'Toko terbanyak'], ['nama', 'Nama sales A–Z']],
+  sudah: [['baru', 'Terbaru'], ['lama', 'Terlama'], ['toko', 'Nama toko A–Z']],
+  noo:   [['baru', 'Terbaru'], ['lama', 'Terlama'], ['toko', 'Nama toko A–Z']]
+};
+var DJ_HERO_BATAS_SALES = 8, DJ_HERO_BATAS_TOKO = 5, DJ_HERO_BATAS_SELESAI = 20;
+
+/* ---- pengelompokan toko menurut keadaan (sama dengan hitungan kartu hero) ---- */
+function djHeroHitung(depo){
+  var hari = djHariIni(), depSales = {}, d = {hari: [], lewat: [], nanti: [], sudah: [], noo: []};
+  DJ.ku.forEach(function(k){ if(depSales[k.kode_salesman] === undefined) depSales[k.kode_salesman] = k.depot || '-'; });
+  DJ.ku.forEach(function(k){
+    if(depo !== 'semua' && (depSales[k.kode_salesman] || '-') !== depo) return;
+    var s = djKeadaan(k, hari);
+    if(s.k === 'selesai'){ d.sudah.push({k: k, s: s}); if(k.status === 'noo') d.noo.push({k: k, s: s}); }
+    else d[s.k].push({k: k, s: s});
+  });
+  return d;
+}
+function djHeroDepos(){ var m = {}; DJ.ku.forEach(function(k){ m[k.depot || '-'] = 1; }); return Object.keys(m).sort(); }
+
+/* ---- tombol angka di kartu hero ---- */
+function djHeroPills(){
+  var box = document.querySelector('#djIsi .dj-pills'); if(!box) return;
+  var d = djHeroHitung(DJ.depo), f = function(n){ return Number(n || 0).toLocaleString('id-ID'); };
+  box.className = 'dh-pills'; box.setAttribute('role', 'group'); box.setAttribute('aria-label', 'Buka daftar toko');
+  box.innerHTML = ['hari', 'lewat', 'nanti', 'sudah', 'noo'].map(function(t){
+    return '<button type="button" class="dh-pl" aria-label="' + f(d[t].length) + ' ' + DJ_HERO[t].k + '. Buka daftar toko" onclick="djBukaHero(\'' + t + '\')"><b>' + f(d[t].length) + '</b><span>' + DJ_HERO[t].k + '</span><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></button>';
+  }).join('');
+  var sub = document.querySelector('#djIsi .dj-sub');
+  if(sub) sub.innerHTML = sub.innerHTML.replace('Ketuk kartu sales di bawah untuk melihat foto dan riwayat tiap tokonya.', 'Ketuk salah satu angka untuk melihat tokonya, atau ketuk kartu sales di bawah.');
+}
+var _djRender39 = djRender;
+djRender = function(){
+  _djRender39();
+  try{ djHeroPills(); }catch(e){ console.warn('v40 pills', e); }
+  if(DJ.heroTab) try{ djHeroRender(); }catch(e){ console.warn('v40 laci', e); }
+};
+djTutupLaci = function(){ DJ.laci = null; DJ.heroTab = null; var o = document.getElementById('djLaci'); if(o) o.remove(); document.removeEventListener('keydown', djLaciKey); };
+
+function djBukaHero(tab){
+  if(DJ.laci) djTutupLaci();
+  DJ.heroTab = tab; DJ.heroDepo = DJ.depo;
+  djHeroRender();
+}
+function djHeroPilih(tab){ DJ.heroTab = tab; var dr = document.querySelector('#djLaci .dj-dr'); if(dr) dr.scrollTop = 0; djHeroRender(true); }
+function djHeroSetDepo(v){ DJ.heroDepo = v; djHeroRender(true); }
+function djHeroSetUrut(v){ DJ.heroUrut[DJ.heroTab] = v; djHeroRender(true); }
+function djHeroToggleSemua(){ DJ.heroSemua[DJ.heroTab] = !DJ.heroSemua[DJ.heroTab]; djHeroRender(); }
+function djHeroBukaGrup(kode){ DJ.heroBuka[DJ.heroTab + '|' + kode] = true; djHeroRender(); }
+
+/* ---- ambil potensi order (rata-rata belanja) & riwayat kunjungan dari temuan_pilot ---- */
+async function djHeroPot(ids){
+  var perlu = ids.filter(function(i){ return i && DJ.pot[i] === undefined && !DJ.potSdg[i]; });
+  if(!perlu.length || !SB_SIAP) return;
+  perlu.forEach(function(i){ DJ.potSdg[i] = 1; });
+  var bag = []; for(var i = 0; i < perlu.length; i += 60) bag.push(perlu.slice(i, i + 60));
+  for(var g = 0; g < bag.length; g += 4){
+    await Promise.all(bag.slice(g, g + 4).map(async function(b){
+      try{
+        var r = await sb.from('temuan_pilot').select('id,rata_belanja_nabati').in('id', b);
+        if(r.error) throw r.error;
+        (r.data || []).forEach(function(t){ DJ.pot[t.id] = Number(t.rata_belanja_nabati) || 0; });
+        b.forEach(function(i){ if(DJ.pot[i] === undefined) DJ.pot[i] = 0; });
+      }catch(e){ console.warn('v40 potensi', e); b.forEach(function(i){ DJ.pot[i] = -1; }); }
+      b.forEach(function(i){ delete DJ.potSdg[i]; });
+    }));
+    if(DJ.heroTab) djHeroRender();
+  }
+}
+async function djHeroRiwayat(ids){
+  var perlu = ids.filter(function(i){ return i && !DJ.hh[i]; });
+  if(!perlu.length || !SB_SIAP) return;
+  perlu.forEach(function(i){ DJ.hh[i] = {muat: true, rows: []}; });
+  var kol = 'id,tanggal,status_tindak_lanjut,jadwal_kunjung_lagi,jadwal_ulang,ulang_dari,jarak_ulang_m,foto_url,nominal_order,catatan,alasan_tidak_tertarik,rata_belanja_nabati';
+  for(var i = 0; i < perlu.length; i += 40){
+    var b = perlu.slice(i, i + 40), bag = b.join(',');
+    try{
+      var r = await sb.from('temuan_pilot').select(kol).or('id.in.(' + bag + '),ulang_dari.in.(' + bag + ')').order('tanggal', {ascending: true}).limit(1000);
+      if(r.error) throw r.error;
+      var rr = r.data || []; try{ var tf = await Promise.resolve(tandatanganiFoto(rr)); if(Array.isArray(tf)) rr = tf; }catch(e){}
+      var by = {}; rr.forEach(function(t){ var k = t.ulang_dari || t.id; (by[k] || (by[k] = [])).push(t); });
+      b.forEach(function(id){ DJ.hh[id] = {muat: false, rows: by[id] || []}; var f = (by[id] || []).filter(function(t){ return !t.ulang_dari; })[0]; if(f) DJ.pot[id] = Number(f.rata_belanja_nabati) || 0; });
+    }catch(e){ console.warn('v40 riwayat', e); b.forEach(function(id){ DJ.hh[id] = {muat: false, rows: [], err: true}; }); }
+    if(DJ.heroTab) djHeroRender();
+  }
+}
+
+/* ---- urutan ---- */
+function djHeroKelompok(items, tab, urut){
+  var per = {};
+  items.forEach(function(x){ var g = per[x.k.kode_salesman] || (per[x.k.kode_salesman] = {kode: x.k.kode_salesman, depot: x.k.depot, rows: [], lamaMax: 0, jadwalMin: '9999'}); g.rows.push(x); if(x.s.n) g.lamaMax = Math.max(g.lamaMax, x.s.n); var j = String(x.k.jadwal || '9998').slice(0, 10); if(j < g.jadwalMin) g.jadwalMin = j; });
+  var gs = Object.keys(per).map(function(k){ var g = per[k]; g.nama = String(namaSalesDari(g.kode) || g.kode);
+    g.rows.sort(function(a, b){
+      if(tab === 'lewat') return (b.s.n || 0) - (a.s.n || 0) || String(a.k.nama_toko || '').localeCompare(String(b.k.nama_toko || ''));
+      if(tab === 'nanti') return String(a.k.jadwal || '9998').localeCompare(String(b.k.jadwal || '9998')) || String(a.k.nama_toko || '').localeCompare(String(b.k.nama_toko || ''));
+      return String(a.k.nama_toko || '').localeCompare(String(b.k.nama_toko || ''));
+    });
+    return g; });
+  gs.sort(function(a, b){
+    if(urut === 'nama') return a.nama.localeCompare(b.nama);
+    if(urut === 'lama') return (b.lamaMax - a.lamaMax) || (b.rows.length - a.rows.length) || a.nama.localeCompare(b.nama);
+    if(urut === 'dekat') return a.jadwalMin.localeCompare(b.jadwalMin) || (b.rows.length - a.rows.length) || a.nama.localeCompare(b.nama);
+    return (b.rows.length - a.rows.length) || a.nama.localeCompare(b.nama);
+  });
+  return gs;
+}
+function djHeroUrutSelesai(items, urut){
+  var tg = function(x){ return String(x.k.ditutup || x.k.kunjungan_terakhir || ''); };
+  return items.slice().sort(function(a, b){
+    if(urut === 'toko') return String(a.k.nama_toko || '').localeCompare(String(b.k.nama_toko || ''));
+    return urut === 'lama' ? tg(a).localeCompare(tg(b)) : tg(b).localeCompare(tg(a));
+  });
+}
+
+/* ---- potongan HTML ---- */
+function djHeroPotChip(id){
+  var v = DJ.pot[id], r = (v === undefined) ? '…' : (v === -1 ? 'belum bisa dimuat' : (djRp(v) || 'belum diisi'));
+  return '<span class="dj-pot" title="Rata-rata belanja Nabati per bulan yang disebut pemilik toko">Potensi order <b>' + r + '</b></span>';
+}
+function djHeroThumb(url, alt, kecil){
+  var ico = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9a2 2 0 0 1 2-2h2l2-3h6l2 3h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>';
+  return '<div class="dh-th">' + ico + (url ? '<img src="' + esc(url) + '" alt="' + esc(alt) + '" loading="lazy" onclick="bukaFoto(' + esc(JSON.stringify(url)) + ')" onerror="this.remove()">' : '') + '</div>';
+}
+function djHeroKet(k, tab){
+  var p = [DJ_ALASAN[k.alasan] || k.alasan || 'Tanpa alasan'];
+  if(tab === 'lewat') p.push('jadwal ' + djTgl(k.jadwal), 'belum dikunjungi lagi');
+  p.push('kunjungan ke-' + (k.kunjungan_ke || 1) + ' dari 3');
+  if(tab !== 'lewat' && k.dibuat) p.push('ditemukan ' + djTgl(k.dibuat));
+  return p.join(' · ');
+}
+function djHeroPetaBtn(k){ return (k.lat && k.lon) ? '<button type="button" class="dh-rbtn" onclick="djTokoDiPeta(' + Number(k.lat) + ',' + Number(k.lon) + ',' + esc(JSON.stringify(k.nama_toko || 'Toko')) + ')">Lihat di peta</button>' : ''; }
+function djHeroKetRiwayat(t){
+  var ket = [];
+  if(t.ulang_dari && t.jarak_ulang_m != null) ket.push('±' + t.jarak_ulang_m + ' m dari toko');
+  if(t.status_tindak_lanjut === 'nanti_dikunjungi'){ var a = DJ_ALASAN[t.jadwal_kunjung_lagi] || t.jadwal_kunjung_lagi; if(a && !t.ulang_dari) ket.push(a); if(t.jadwal_ulang || t.jadwal_kunjung_lagi) ket.push('dijadwalkan ' + (t.jadwal_ulang ? djTgl(t.jadwal_ulang) : (DJ_ALASAN[t.jadwal_kunjung_lagi] || t.jadwal_kunjung_lagi))); }
+  if(t.status_tindak_lanjut === 'tidak_tertarik' && t.alasan_tidak_tertarik) ket.push('alasan: ' + t.alasan_tidak_tertarik);
+  if(t.nominal_order) ket.push('order Rp ' + Number(t.nominal_order).toLocaleString('id-ID'));
+  if(t.catatan) ket.push('“' + t.catatan + '”');
+  return ket.join(' · ');
+}
+function djHeroSelesaiHtml(x){
+  var k = x.k, H = DJ.hh[k.id] || {muat: true, rows: []}, hasil = DJ_HASIL[k.status] || [k.status, 'no'];
+  var tl;
+  if(H.muat) tl = '<div class="dh-ket">Memuat riwayat kunjungan…</div>';
+  else if(H.rows.length){
+    var n = H.rows.length;
+    tl = '<ol>' + H.rows.map(function(t, i){
+      var akhir = i === n - 1, hs = DJ_TL[t.status_tindak_lanjut] || t.status_tindak_lanjut || 'Belum ada status';
+      var dot = akhir ? (k.status === 'noo' || k.status === 'dicover' ? 'var(--dj-okc)' : (k.status === 'tidak_tertarik' ? 'var(--dj-late)' : 'var(--dj-tx3)')) : 'var(--dj-tx3)';
+      var ket = djHeroKetRiwayat(t);
+      return '<li><i style="background:' + dot + '"></i>' + djHeroThumb(t.foto_url, 'Foto kunjungan', true) + '<div class="dh-tx"><span><b>' + djWaktu(t.tanggal) + '</b> · ' + (i === 0 && !t.ulang_dari ? 'Temuan pertama' : 'Kunjungan ulang ke-' + (i + 1)) + ' · ' + esc(hs) + '</span>' + (ket ? '<small>' + esc(ket) + '</small>' : '') + '</div></li>';
+    }).join('') + '</ol>';
+  } else tl = '<div class="dh-ket">' + (H.err ? 'Riwayat kunjungan belum bisa dimuat.' : 'Belum ada riwayat kunjungan tercatat. Ditutup ' + djTgl(k.ditutup) + '.') + '</div>';
+  return '<article class="dh-sc"><div class="dh-rt"><b style="font-size:17px">' + esc(k.nama_toko || 'Toko tanpa nama') + '</b><span class="dh-tg ' + hasil[1] + '">' + esc(hasil[0]) + '</span><span style="margin-left:auto;font-size:13px;color:var(--dj-tx3)">' + esc(namaSalesDari(k.kode_salesman)) + ' · ' + esc(djDepoPendek(k.depot)) + '</span></div>' + tl + '<div class="dh-bs">' + djHeroPetaBtn(k) + '</div></article>';
+}
+function djHeroNooHtml(x){
+  var k = x.k, H = DJ.hh[k.id] || {muat: true, rows: []}, nm = esc(k.nama_toko || 'Toko tanpa nama');
+  var sub = esc(String(namaSalesDari(k.kode_salesman))) + ' · ' + esc(djDepoPendek(k.depot)) + ' · ' + esc(k.kode_salesman);
+  var rows = H.rows, iA = -1;
+  for(var i = rows.length - 1; i >= 0; i--){ if(rows[i].status_tindak_lanjut === 'lanjut_noo'){ iA = i; break; } }
+  if(iA < 0) iA = rows.length - 1;
+  var bef = iA > 0 ? rows[iA - 1] : null, aft = iA >= 0 ? rows[iA] : null, first = rows[0];
+  var btn = '<div class="dh-bs">' + djHeroPetaBtn(k) + '<button type="button" onclick="djTutupLaci();goView(\'temuan\')">Buka di Temuan &amp; Foto</button></div>';
+  if(H.muat) return '<article class="dh-noo"><div class="dh-rt"><b style="font-size:19px">' + nm + '</b><span class="dh-tg ok">Jadi NOO</span></div><span style="font-size:14px;color:var(--dj-tx2)">' + sub + '</span><div class="dh-ket">Memuat kunjungan 1 dan 2…</div></article>';
+  if(!aft || !bef) return '<article class="dh-noo"><div class="dh-rt"><b style="font-size:19px">' + nm + '</b><span class="dh-tg ok">Jadi NOO</span></div><span style="font-size:14px;color:var(--dj-tx2)">' + sub + '</span><div class="dh-ket">' + (H.err ? 'Riwayat kunjungan belum bisa dimuat.' : 'Riwayat kunjungan belum lengkap. Ditutup ' + djTgl(k.ditutup) + '.') + '</div>' + btn + '</article>';
+  var hr = function(t){ return String(t.tanggal || '').length > 9 ? new Date(Date.parse(t.tanggal) + 7 * 3600e3).toISOString().slice(0, 10) : ''; };
+  var lama = djSelisih(hr(aft), hr(first));
+  var jd = bef.jadwal_ulang ? String(bef.jadwal_ulang).slice(0, 10) : '', ket2 = '';
+  if(jd){ var d = djSelisih(hr(aft), jd); ket2 = d === 0 ? 'Tepat di hari jadwal' : (d > 0 ? d + ' hari setelah jadwal' : Math.abs(d) + ' hari sebelum jadwal'); }
+  var pot = Number(first.rata_belanja_nabati) || Number(aft.rata_belanja_nabati) || 0;
+  var alas = DJ_ALASAN[bef.jadwal_kunjung_lagi] || bef.jadwal_kunjung_lagi;
+  var fo = function(t, cls, lbl){ return '<div class="dh-ph' + cls + '">' + lbl + (t.foto_url ? '<img src="' + esc(t.foto_url) + '" alt="' + esc(lbl) + '" loading="lazy" onclick="bukaFoto(' + esc(JSON.stringify(t.foto_url)) + ')" onerror="this.remove()">' : '') + '</div>'; };
+  return '<article class="dh-noo"><div class="dh-rt"><b style="font-size:19px">' + nm + '</b><span class="dh-tg ok">Jadi NOO di kunjungan ke-' + (iA + 1) + '</span></div><span style="font-size:14px;color:var(--dj-tx2)">' + sub + '</span>' +
+    '<div class="dh-ba"><div class="dh-bc">' + fo(bef, '', 'Foto kunjungan ' + iA) + '<span class="dh-bl">Sebelum · ' + djTgl(bef.tanggal) + '</span><span style="font-size:14px"><b>' + esc(DJ_TL[bef.status_tindak_lanjut] || bef.status_tindak_lanjut || '-') + '</b>' + (alas ? ' · alasan: ' + esc(String(alas).toLowerCase()) : '') + '</span>' + (jd ? '<span style="font-size:13px;color:var(--dj-tx2)">Dijadwalkan ke ' + djTgl(jd) + '</span>' : '') + '</div>' +
+    '<div class="dh-bc">' + fo(aft, ' ok', 'Foto kunjungan ' + (iA + 1)) + '<span class="dh-bl ok">Sesudah · ' + djWaktu(aft.tanggal) + '</span><span style="font-size:14px"><b>' + esc(DJ_TL[aft.status_tindak_lanjut] || 'Lanjut NOO') + '</b>' + (aft.jarak_ulang_m != null ? ' · sales ±' + aft.jarak_ulang_m + ' m dari toko' : '') + '</span>' + (ket2 ? '<span style="font-size:13px;color:var(--dj-tx2)">' + ket2 + '</span>' : '') + '</div></div>' +
+    '<div class="dh-kp"><div><span>Nominal orderan</span><b style="color:var(--dj-acc)">' + (djRp(aft.nominal_order) || 'belum diisi') + '</b></div><div><span>Potensi (rata-rata belanja)</span><b>' + (djRp(pot) || 'belum diisi') + '</b></div><div><span>Jarak temuan → NOO</span><b>' + (isFinite(lama) ? lama + ' hari' : '-') + '</b></div></div>' + btn + '</article>';
+}
+
+/* ---- laci hero ---- */
+function djHeroRender(jaga){
+  var tab = DJ.heroTab; if(!tab) return;
+  var depos = djHeroDepos(); if(DJ.heroDepo !== 'semua' && depos.indexOf(DJ.heroDepo) < 0) DJ.heroDepo = 'semua';
+  var D = djHeroHitung(DJ.heroDepo), f = function(n){ return Number(n || 0).toLocaleString('id-ID'); };
+  var urutOps = DJ_HERO_URUT[tab], urut = DJ.heroUrut[tab] || urutOps[0][0];
+  if(!urutOps.some(function(x){ return x[0] === urut; })) urut = urutOps[0][0];
+  var items = D[tab], n = items.length;
+  var J = {
+    hari:  [f(n) + ' toko dijadwalkan hari ini', 'Per sales. Ketuk foto toko untuk memperbesar.'],
+    lewat: [f(n) + ' toko lewat jadwal', 'Belum dikunjungi lagi sesudah tanggal jadwalnya.' + (urut === 'lama' ? ' Urut paling lama dulu.' : '')],
+    nanti: [f(n) + ' toko terjadwal nanti', 'Jadwal kunjungan ulangnya masih di depan.' + (urut === 'dekat' ? ' Urut tanggal jadwal terdekat.' : '')],
+    sudah: [f(n) + ' toko sudah dikunjungi ulang', 'Kunjungan ulang yang sudah selesai, 30 hari terakhir.'],
+    noo:   [f(n) + ' toko jadi NOO dari kunjungan ulang', 'Sebelum dan sesudah, dengan nominal orderannya.']
+  };
+  var lingkup = DJ.heroDepo === 'semua' ? depos.length + ' depo' : djDepoPendek(DJ.heroDepo);
+  var tampil, sisaTxt = '', ids = [];
+  var isi = '';
+  if(tab === 'sudah' || tab === 'noo'){
+    var urt = djHeroUrutSelesai(items, urut), semua = !!DJ.heroSemua[tab], vis = semua ? urt : urt.slice(0, DJ_HERO_BATAS_SELESAI);
+    vis.forEach(function(x){ ids.push(x.k.id); });
+    if(tab === 'sudah') isi += '<p class="dh-note">Toko yang kunjungan ulangnya sudah selesai (jadi NOO, tidak tertarik, sudah dicover, atau ditutup setelah 3x) dalam 30 hari terakhir. Toko yang dikunjungi lagi tapi masih “nanti dikunjungi” tetap ada di daftar Hari ini / Terjadwal.</p>';
+    if(!vis.length) isi += '<div class="dj-empty">Belum ada toko di daftar ini.</div>';
+    isi += vis.map(tab === 'sudah' ? djHeroSelesaiHtml : djHeroNooHtml).join('');
+    if(urt.length > DJ_HERO_BATAS_SELESAI) isi += '<button type="button" class="dh-more" onclick="djHeroToggleSemua()">' + (semua ? 'Tampilkan ' + DJ_HERO_BATAS_SELESAI + ' teratas' : 'Tampilkan semua ' + urt.length + ' toko') + '</button>';
+    tampil = urt;
+  } else {
+    var gs = djHeroKelompok(items, tab, urut), semua2 = !!DJ.heroSemua[tab], gv = semua2 ? gs : gs.slice(0, DJ_HERO_BATAS_SALES);
+    if(!gv.length) isi += '<div class="dj-empty">Belum ada toko di daftar ini.</div>';
+    gv.forEach(function(g){
+      var buka = !!DJ.heroBuka[tab + '|' + g.kode], rv = buka ? g.rows : g.rows.slice(0, DJ_HERO_BATAS_TOKO);
+      isi += '<section class="dh-grp"><div class="dh-gh"><span class="dh-av" aria-hidden="true">' + esc(inisial(g.nama)) + '</span><div class="dh-gn"><b>' + esc(g.nama.toLowerCase()) + '</b><span>' + esc(djDepoPendek(g.depot)) + ' · ' + esc(g.kode) + '</span></div><span class="dh-cnt">' + g.rows.length + ' toko</span></div>' +
+        rv.map(function(x){
+          ids.push(x.k.id);
+          return '<article class="dh-row">' + djHeroThumb(x.k.foto_url, 'Foto toko ' + (x.k.nama_toko || ''), false) + '<div class="dh-ri"><div class="dh-rt"><b>' + esc(x.k.nama_toko || 'Toko tanpa nama') + '</b>' + djHeroPotChip(x.k.id) + '<span class="dh-tg ' + tab + '">' + esc(x.s.t) + '</span></div><span class="dh-ket">' + esc(djHeroKet(x.k, tab)) + '</span></div>' + djHeroPetaBtn(x.k) + '</article>';
+        }).join('') +
+        (g.rows.length > rv.length ? '<button type="button" class="dh-more s" onclick="djHeroBukaGrup(' + esc(JSON.stringify(String(g.kode))) + ')">+ ' + (g.rows.length - rv.length) + ' toko lagi dari ' + esc(g.nama.toLowerCase()) + '</button>' : '') + '</section>';
+    });
+    if(gs.length > DJ_HERO_BATAS_SALES){
+      var sisaT = gs.slice(DJ_HERO_BATAS_SALES).reduce(function(a, g){ return a + g.rows.length; }, 0);
+      isi += '<button type="button" class="dh-more" onclick="djHeroToggleSemua()">' + (semua2 ? 'Tampilkan ' + DJ_HERO_BATAS_SALES + ' sales teratas' : '+ ' + f(sisaT) + ' toko dari ' + (gs.length - DJ_HERO_BATAS_SALES) + ' sales lainnya') + '</button>';
+    }
+    tampil = gs;
+  }
+  var tabs = ['hari', 'lewat', 'nanti', 'sudah', 'noo'].map(function(t){ return '<button type="button" aria-pressed="' + (t === tab) + '" onclick="djHeroPilih(\'' + t + '\')">' + DJ_HERO[t].tab + ' (' + f(D[t].length) + ')</button>'; }).join('');
+  var optD = ['semua'].concat(depos).map(function(d){ return '<option value="' + esc(d) + '"' + (DJ.heroDepo === d ? ' selected' : '') + '>' + (d === 'semua' ? 'Semua depo (' + depos.length + ')' : esc(djDepoPendek(d))) + '</option>'; }).join('');
+  var optU = urutOps.map(function(u){ return '<option value="' + u[0] + '"' + (urut === u[0] ? ' selected' : '') + '>' + u[1] + '</option>'; }).join('');
+  var h = '<div class="dj-dr" role="dialog" aria-modal="true" aria-labelledby="djHeroJ" onclick="event.stopPropagation()">' +
+    '<div class="dj-drh"><div style="display:flex;align-items:flex-start;gap:12px"><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="dh-eb">Kunjungi ulang · ' + esc(lingkup) + (tab === 'sudah' || tab === 'noo' ? '' : ' · semua sales') + '</span><h2 id="djHeroJ" class="dh-t">' + J[tab][0] + '</h2><span class="dh-s">' + J[tab][1] + '</span></div><button type="button" class="dj-x" style="width:44px;height:44px" aria-label="Tutup" onclick="djTutupLaci()">×</button></div>' +
+    '<div class="dh-tabs" role="group" aria-label="Pilih daftar">' + tabs + '</div>' +
+    '<div class="dh-ctl"><label>Depo <select onchange="djHeroSetDepo(this.value)">' + optD + '</select></label><label>Urutkan <select onchange="djHeroSetUrut(this.value)">' + optU + '</select></label><button type="button" class="dh-xls" onclick="djHeroUnduh()">Unduh Excel</button></div></div>' +
+    '<div class="dh-body">' + isi + '</div></div>';
+  var o = document.getElementById('djLaci'), sc = 0;
+  if(!o){ o = document.createElement('div'); o.id = 'djLaci'; o.className = 'dj-ov'; o.onclick = djTutupLaci; document.body.appendChild(o); document.addEventListener('keydown', djLaciKey); }
+  else sc = (o.querySelector('.dj-dr') || {}).scrollTop || 0;
+  o.innerHTML = h;
+  var dr = o.querySelector('.dj-dr'); if(dr) dr.scrollTop = jaga ? 0 : sc;
+  if(!o.dataset.fokus){ o.dataset.fokus = '1'; var x = o.querySelector('.dj-x'); if(x) try{ x.focus({preventScroll: true}); }catch(e){} }
+  setTimeout(function(){
+    if(DJ.heroTab !== tab) return;
+    if(tab === 'sudah' || tab === 'noo') djHeroRiwayat(ids); else djHeroPot(ids);
+  }, 0);
+}
+
+/* ---- Unduh Excel (daftar yang sedang dibuka) ---- */
+async function djHeroUnduh(){
+  var tab = DJ.heroTab; if(!tab) return;
+  if(typeof ExcelJS === 'undefined'){ toast('Pustaka Excel belum termuat, coba lagi sebentar.'); return; }
+  var D = djHeroHitung(DJ.heroDepo), urutOps = DJ_HERO_URUT[tab], urut = DJ.heroUrut[tab] || urutOps[0][0], flat;
+  if(tab === 'sudah' || tab === 'noo') flat = djHeroUrutSelesai(D[tab], urut);
+  else { flat = []; djHeroKelompok(D[tab], tab, urut).forEach(function(g){ flat = flat.concat(g.rows); }); }
+  if(!flat.length){ toast('Daftar ini masih kosong.'); return; }
+  toast('Menyiapkan Excel…');
+  await djHeroPot(flat.map(function(x){ return x.k.id; }));
+  var tg = function(s){ if(!s) return ''; s = String(s); return s.length <= 10 ? s : new Date(Date.parse(s) + 7 * 3600e3).toISOString().slice(0, 10); };
+  var wb = new ExcelJS.Workbook(), ws = wb.addWorksheet(DJ_HERO[tab].tab);
+  ws.columns = [{header: 'Depo', key: 'depo', width: 18}, {header: 'Sales', key: 'sales', width: 24}, {header: 'Kode sales', key: 'kode', width: 12}, {header: 'Nama toko', key: 'toko', width: 28}, {header: 'Keadaan', key: 'ke', width: 22}, {header: 'Alasan kunjungi lagi', key: 'alasan', width: 22}, {header: 'Jadwal', key: 'jadwal', width: 12}, {header: 'Kunjungan ke-', key: 'ke2', width: 14}, {header: 'Ditemukan', key: 'dibuat', width: 12}, {header: 'Kunjungan terakhir', key: 'kt', width: 18}, {header: 'Ditutup', key: 'tutup', width: 12}, {header: 'Potensi order (rata-rata belanja, Rp)', key: 'pot', width: 22, style: {numFmt: '#,##0'}}, {header: 'Latitude', key: 'lat', width: 12}, {header: 'Longitude', key: 'lon', width: 12}];
+  flat.forEach(function(x){ var k = x.k, p = DJ.pot[k.id];
+    ws.addRow({depo: k.depot || '', sales: String(namaSalesDari(k.kode_salesman) || ''), kode: k.kode_salesman, toko: k.nama_toko || '', ke: x.s.t, alasan: DJ_ALASAN[k.alasan] || k.alasan || '', jadwal: tg(k.jadwal), ke2: k.kunjungan_ke || 1, dibuat: tg(k.dibuat), kt: tg(k.kunjungan_terakhir), tutup: tg(k.ditutup), pot: p > 0 ? p : null, lat: k.lat, lon: k.lon}); });
+  gayaHeaderXlsx(ws); ws.autoFilter = {from: 'A1', to: 'N1'};
+  await unduhWorkbook(wb, 'Kunjungi_Ulang_' + DJ_HERO[tab].tab.replace(/\s+/g, '_'));
+}
+
+</script>
 </body>
 </html>
